@@ -1,0 +1,25 @@
+# kintone-docker-php
+
+version: "2"
+services:
+
+  mysql:
+    image: mysql:5.7
+    ports:
+      - "13314:3306" # sequel用
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: kintone
+#    tty: true
+    stdin_open: true
+    privileged: true
+
+  php:
+    build: ./docker/php
+    volumes:
+      - .:/var/www/kintone
+    working_dir: /var/www/kintone
+    mem_limit: 268435456  # 256MB. loal dockerではm, gが使用できない。
+    tty: true
+    stdin_open: true
+    privileged: true
