@@ -61,4 +61,4 @@ ssh-firefox:
 
 clear:
 	docker exec -it $(NAME)_php_1 sh -c "php composer.phar dump-autoload --optimize"
-	docker exec -it $(NAME)_php_1 sh -c "php artisan clear-compiled"
+	docker exec -it $(NAME)_php_1 sh -c "php artisan clear-compiled ; php artisan config:clear"
