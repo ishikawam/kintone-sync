@@ -12,3 +12,5 @@ FROM php:7.1-cli
 #    && apk del .memcached-deps .phpize-deps
 #
 #RUN docker-php-ext-install pdo_mysql zip gd opcache
+
+RUN docker-php-ext-install pdo_mysql
