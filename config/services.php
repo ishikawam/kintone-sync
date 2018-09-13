@@ -35,4 +35,11 @@ return [
         'secret' => env('STRIPE_SECRET'),
     ],
 
+    // Kintone
+    'kintone' => [
+        'domain' => env('KINTONE_DOMAIN', 'cybozu.com'),
+        'subdomain' => env('KINTONE_SUBDOMAIN'),
+        'login' => env('KINTONE_LOGIN'),
+        'password' => env('KINTONE_PASSWORD'),
+    ],
 ];
