@@ -47,7 +47,7 @@ class GetInfo extends Command
      */
     public function handle()
     {
-        $this->api = new \CybozuHttp\Api\KintoneApi(new \CybozuHttp\Client(config('services.kintone')));
+        $this->api = new \CybozuHttp\Api\KintoneApi(new \CybozuHttp\Client(config('services.kintone.login')));
 
         // アプリ
         $this->info('getApps');
@@ -85,8 +85,17 @@ class GetInfo extends Command
         // キーをappIdに
         $apps = array_combine(array_column($apps, 'appId'), $apps);
 
+        // ignore apps
+        $ignoreApps = config('services.kintone.ignore_apps');
+
         $spaceIds = [];
-        foreach ($apps as $app) {
+        foreach ($apps as $key => $app) {
+            // ignore apps
+            if (in_array($app['appId'], $ignoreApps)) {
+                unset($apps[$key]);
+                continue;
+            }
+
             $row = \App\Model\Apps::firstOrNew(['appId' => $app['appId']]);
             $preArray = $row->toArray();
             $row->appId = $app['appId'];
@@ -112,7 +121,6 @@ class GetInfo extends Command
             if ($diff != ['pre' => null, 'post' => null]) {
                 dump($row->appId, $diff);
             }
-
         }
 
         // 次にkintoneで削除されたレコードを検索してDBのレコードを削除
@@ -185,11 +193,11 @@ class GetInfo extends Command
     private function getForm(array $appIds)
     {
         foreach ($appIds as $appId) {
-            $data = $this->api->form()->get($appId);
+            $data = $this->api->app()->getForm($appId);
             $row = \App\Model\Form::firstOrNew(['appId' => $appId]);
             $preArray = $row->toArray();
             $row->appId = $appId;
-            $row->properties = json_encode($data['properties'], JSON_UNESCAPED_UNICODE);
+            $row->properties = json_encode($data, JSON_UNESCAPED_UNICODE);
             $postArray = self::castForDb($row->toArray());
             $row->save();
 
@@ -206,6 +214,7 @@ class GetInfo extends Command
         // 次にkintoneで削除されたレコードを検索してDBのレコードを削除
         foreach (\App\Model\Form::all() as $row) {
             if (! in_array($row->appId, $appIds)) {
+                dump('deleted!', $row->toArray());
                 $row->delete();
             }
         }
@@ -213,65 +222,49 @@ class GetInfo extends Command
 
     /**
      * フィールド情報をDBに保存
+     * (当たり前のはずだが)同じrevisionで内容は変わらないはず @todo; 確認
      *
      * @params int[] $appIds
      */
     private function getFields(array $appIds)
     {
         foreach ($appIds as $appId) {
-            $data = $this->api->fields()->get($appId);
-            $row = \App\Model\Fields::firstOrNew(['appId' => $appId]);
-            $preArray = $row->toArray();
-            $row->appId = $appId;
-            $row->properties = json_encode($data['properties'], JSON_UNESCAPED_UNICODE);
-            $row->revision = $data['revision'];
-            $postArray = self::castForDb($row->toArray());
-            $row->save();
-
-            // 差分比較
-            $diff = [
-                'pre' => array_diff($preArray, $postArray),
-                'post' => array_diff($postArray, $preArray),
-            ];
-            if ($diff != ['pre' => null, 'post' => null]) {
-                dump($row->id, $diff);
-            }
+            $data = $this->api->app()->getFields($appId);
+            $row = \App\Model\Fields::firstOrCreate([
+                    'appId' => $appId,
+                    'revision' => $data['revision'],
+                ], [
+                    'properties' => json_encode($data['properties'], JSON_UNESCAPED_UNICODE),
+                ]);
         }
-
+/* 消す必要ない
         // 次にkintoneで削除されたレコードを検索してDBのレコードを削除
         foreach (\App\Model\Fields::all() as $row) {
             if (! in_array($row->appId, $appIds)) {
                 $row->delete();
             }
         }
+*/
     }
 
     /**
      * レイアウト情報をDBに保存
+     * (当たり前のはずだが)同じrevisionで内容は変わらないはず @todo; 確認
      *
      * @params int[] $appIds
      */
     private function getLayout(array $appIds)
     {
         foreach ($appIds as $appId) {
-            $data = $this->api->layout()->get($appId);
-            $row = \App\Model\Layout::firstOrNew(['appId' => $appId]);
-            $preArray = $row->toArray();
-            $row->appId = $appId;
-            $row->properties = json_encode($data['layout'], JSON_UNESCAPED_UNICODE);
-            $row->revision = $data['revision'];
-            $postArray = self::castForDb($row->toArray());
-            $row->save();
-
-            // 差分比較
-            $diff = [
-                'pre' => array_diff($preArray, $postArray),
-                'post' => array_diff($postArray, $preArray),
-            ];
-            if ($diff != ['pre' => null, 'post' => null]) {
-                dump($row->id, $diff);
-            }
+            $data = $this->api->app()->getLayout($appId);
+            $row = \App\Model\Layout::firstOrCreate([
+                    'appId' => $appId,
+                    'revision' => $data['revision'],
+                ], [
+                    'layout' => json_encode($data['layout'], JSON_UNESCAPED_UNICODE),
+                ]);
         }
+/* 消す必要ない
 
         // 次にkintoneで削除されたレコードを検索してDBのレコードを削除
         foreach (\App\Model\Layout::all() as $row) {
@@ -279,6 +272,7 @@ class GetInfo extends Command
                 $row->delete();
             }
         }
+*/
     }
 
     /**

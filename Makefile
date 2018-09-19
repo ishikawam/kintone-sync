@@ -62,3 +62,9 @@ clear:
 
 get-info:
 	docker exec -it $(NAME)_php_1 bash -c "php artisan kintone:get-info"
+
+get-apps-data:
+	docker exec -it $(NAME)_php_1 bash -c "php artisan kintone:get-apps-data"
+
+create-and-update-app-tables:
+	docker exec -it $(NAME)_php_1 bash -c "php artisan kintone:create-and-update-app-tables"

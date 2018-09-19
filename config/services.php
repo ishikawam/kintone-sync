@@ -37,9 +37,13 @@ return [
 
     // Kintone
     'kintone' => [
-        'domain' => env('KINTONE_DOMAIN', 'cybozu.com'),
-        'subdomain' => env('KINTONE_SUBDOMAIN'),
-        'login' => env('KINTONE_LOGIN'),
-        'password' => env('KINTONE_PASSWORD'),
+        'login' => [
+            'domain' => env('KINTONE_DOMAIN', 'cybozu.com'),
+            'subdomain' => env('KINTONE_SUBDOMAIN'),
+            'login' => env('KINTONE_LOGIN'),
+            'password' => env('KINTONE_PASSWORD'),
+        ],
+
+        'ignore_apps' => array_filter(explode(',', env('KINTONE_IGNORE_APPS'))),
     ],
 ];
