@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Fields extends Model
 {
-    protected $primaryKey = 'appId';
-    protected $guarded = ['appId'];
+    protected $primaryKey = 'id';
+    protected $guarded = ['id'];
     public $timestamps = false;
 }

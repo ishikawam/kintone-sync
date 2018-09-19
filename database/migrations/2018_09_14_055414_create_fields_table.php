@@ -14,9 +14,14 @@ class CreateFieldsTable extends Migration
     public function up()
     {
         Schema::create('fields', function (Blueprint $table) {
-            $table->increments('appId');
+            $table->increments('id');
+            $table->unsignedInteger('appId');
             $table->unsignedBigInteger('revision');
             $table->text('properties');
+
+            $table->boolean('batch')->default(false);  // appテーブルにスキーマ反映済みか
+
+            $table->index(['appId', 'batch', 'revision']);
         });
     }
 

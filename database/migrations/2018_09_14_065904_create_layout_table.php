@@ -14,9 +14,14 @@ class CreateLayoutTable extends Migration
     public function up()
     {
         Schema::create('layout', function (Blueprint $table) {
-            $table->increments('appId');
+            $table->increments('id');
+            $table->unsignedInteger('appId');
             $table->unsignedBigInteger('revision');
-            $table->text('properties');
+            $table->text('layout');
+
+            $table->boolean('batch')->default(false);  // appテーブルにスキーマ反映済みか
+
+            $table->index(['appId', 'batch', 'revision']);
         });
     }
 
