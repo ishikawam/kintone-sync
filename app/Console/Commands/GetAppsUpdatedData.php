@@ -5,23 +5,22 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 
 /**
- * アプリのすべてのレコードを取得し、DBにGET同期保存する
+ * アプリの更新されたレコードを取得し、DBにGET同期保存する
+ * 更新があった場合はinsert, updateする
+ * その上でtotalCountとtableレコード総数を比較してずれていたら仕方ないのでGetAppsAllDataを実行する
  * レコードの更新の操作ログを残す
  *
- * レコードの新規追加、更新はAPI発行数を絞って取得できるのでそちらに任せる。> GetAppsUpdatedData
- * これは1日1回程度実行する。通常のデータ更新作業ならやらなくても整合保つはず。
- * なお、スキーマの変更があった場合はCreateAndUpdateAppTablesから直接アプリ指定して実行される。
- * APIは、例えば20,000レコードある場合APIは40アクセス消費する。
- * 直接DBをいじった場合に強制同期したいときはfieldsのレコードを削除する等して対応する。
+ * これは5分に1回程度。(1日288アクセス消費)
+ * 直接DBをいじった場合に強制同期したいときは、比較用キャッシュを削除する
  */
-class GetAppsAllData extends Command
+class GetAppsUpdatedData extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'kintone:get-apps-all-data {appId?}';
+    protected $signature = 'kintone:get-apps-updated-data {appId?}';
 
     /**
      * The console command description.
@@ -63,7 +62,7 @@ class GetAppsAllData extends Command
     }
 
     /**
-     * 更新のあったアプリの全レコードを取得
+     * 更新のあったアプリの更新のあったレコードを取得
      *
      * @param int|null $appId
      */
@@ -82,13 +81,17 @@ class GetAppsAllData extends Command
                 throw new \Exception('テーブル ' . $tableName . ' が存在しません。kintone:get-info, kintone:create-and-update-app-tablesを先に実行してください。それでもうまくいかない場合はfieldsテーブルを削除してから再度それぞれ実行してください。');
             }
 
-            // 全件取得
+            // DBから最終更新日、件数を取得
+            $latest = \DB::table($tableName)
+                ->orderByDesc('更新日時')
+                ->first(['更新日時']);
+
+            // 更新分を取得
             $totalCount = 0;
             $offset = 0;
-            $ids = [];
             while ($totalCount >= $offset) {
                 $records = $this->api->records()
-                    ->get($app->appId, 'limit ' . self::LIMIT . ' offset ' . $offset);
+                    ->get($app->appId, '更新日時 > "' . $latest->更新日時 . '" limit ' . self::LIMIT . ' offset ' . $offset);
 
                 if ($offset == 0) {
                     // 初回
@@ -97,8 +100,6 @@ class GetAppsAllData extends Command
                 }
 
                 $offset += self::LIMIT;
-
-                echo('.');
 
                 // insert update
                 foreach ($records['records'] as $record) {
@@ -116,23 +117,8 @@ class GetAppsAllData extends Command
                         }
                     }
 
-                    // @todo; updateの変更ログは残していない
-
                     $recordModel = \DB::table($tableName)
                         ->updateOrInsert([self::PRIMARY_KEY_NAME => $tmp[self::PRIMARY_KEY_NAME]], $tmp);
-
-                    // 削除用にidを保管
-                    $ids[$record['$id']['value']] = true;
-                }
-            }
-
-            // 削除
-            foreach (\DB::table($tableName)->get() as $val) {
-//            foreach (\DB::table($tableName)->get(['$id']) as $val) {
-                if (! isset($ids[$val->{'$id'}])) {
-                    \Log::info(json_encode(['delete record. APP: ' . $app->appId, $val], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-                    echo('D');
-                    \DB::table($tableName)->where('$id', $val->{'$id'})->delete();
                 }
             }
         }
