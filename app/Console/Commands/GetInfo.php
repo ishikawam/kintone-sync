@@ -119,14 +119,16 @@ class GetInfo extends Command
                 'post' => array_diff($postArray, $preArray),
             ];
             if ($diff != ['pre' => null, 'post' => null]) {
-                dump($row->appId, $diff);
+                \Log::info(json_encode(['diff app: ' . $row->appId, $diff], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                $this->warn('diff app: ' . $row->appId);
             }
         }
 
         // 次にkintoneで削除されたレコードを検索してDBのレコードを削除
         foreach (\App\Model\Apps::all() as $row) {
             if (! isset($apps[$row->appId])) {
-                dump('deleted!', $row->toArray());
+                \Log::info(json_encode(['delete app', $row->toArray()], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                $this->warn('delete app: ' . $row->appId);
                 $row->delete();
             }
         }
@@ -137,7 +139,7 @@ class GetInfo extends Command
     /**
      * スペース情報をDBに保存
      *
-     * @params int[] $spaceIds
+     * @param int[] $spaceIds
      */
     private function getSpaces(array $spaceIds)
     {
@@ -172,14 +174,16 @@ class GetInfo extends Command
                 'post' => array_diff($postArray, $preArray),
             ];
             if ($diff != ['pre' => null, 'post' => null]) {
-                dump($row->id, $diff);
+                \Log::info(json_encode(['diff spaces: ' . $row->id, $diff], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                $this->warn('diff spaces: ' . $row->id);
             }
         }
 
         // 次にkintoneで削除されたレコードを検索してDBのレコードを削除
         foreach (\App\Model\Spaces::all() as $row) {
             if (! in_array($row->id, $spaceIds)) {
-                dump('deleted!', $row->toArray());
+                \Log::info(json_encode(['delete spaces', $row->toArray()], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                $this->warn('delete spaces: ' . $row->id);
                 $row->delete();
             }
         }
@@ -188,7 +192,7 @@ class GetInfo extends Command
     /**
      * フォーム情報をDBに保存
      *
-     * @params int[] $appIds
+     * @param int[] $appIds
      */
     private function getForm(array $appIds)
     {
@@ -207,14 +211,16 @@ class GetInfo extends Command
                 'post' => array_diff($postArray, $preArray),
             ];
             if ($diff != ['pre' => null, 'post' => null]) {
-                dump($row->id, $diff);
+                \Log::info(json_encode(['diff form: ' . $row->id, $diff], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                $this->warn('diff form: ' . $row->id);
             }
         }
 
         // 次にkintoneで削除されたレコードを検索してDBのレコードを削除
         foreach (\App\Model\Form::all() as $row) {
             if (! in_array($row->appId, $appIds)) {
-                dump('deleted!', $row->toArray());
+                \Log::info(json_encode(['delete form', $row->toArray()], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                $this->warn('delete form: ' . $row->id);
                 $row->delete();
             }
         }
@@ -222,9 +228,9 @@ class GetInfo extends Command
 
     /**
      * フィールド情報をDBに保存
-     * (当たり前のはずだが)同じrevisionで内容は変わらないはず @todo; 確認
+     * revisionごと保存。batchはmigration進捗フラグとして使用
      *
-     * @params int[] $appIds
+     * @param int[] $appIds
      */
     private function getFields(array $appIds)
     {
@@ -237,21 +243,13 @@ class GetInfo extends Command
                     'properties' => json_encode($data['properties'], JSON_UNESCAPED_UNICODE),
                 ]);
         }
-/* 消す必要ない
-        // 次にkintoneで削除されたレコードを検索してDBのレコードを削除
-        foreach (\App\Model\Fields::all() as $row) {
-            if (! in_array($row->appId, $appIds)) {
-                $row->delete();
-            }
-        }
-*/
     }
 
     /**
      * レイアウト情報をDBに保存
-     * (当たり前のはずだが)同じrevisionで内容は変わらないはず @todo; 確認
+     * revisionごと保存。batchは現在未使用
      *
-     * @params int[] $appIds
+     * @param int[] $appIds
      */
     private function getLayout(array $appIds)
     {
@@ -264,20 +262,11 @@ class GetInfo extends Command
                     'layout' => json_encode($data['layout'], JSON_UNESCAPED_UNICODE),
                 ]);
         }
-/* 消す必要ない
-
-        // 次にkintoneで削除されたレコードを検索してDBのレコードを削除
-        foreach (\App\Model\Layout::all() as $row) {
-            if (! in_array($row->appId, $appIds)) {
-                $row->delete();
-            }
-        }
-*/
     }
 
     /**
      * DBとAPIで取得した値との比較をするために、booleanを数値にキャスト変換
-     * @params array $arr
+     * @param array $arr
      */
     private static function castForDb(array $arr)
     {

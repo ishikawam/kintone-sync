@@ -13,16 +13,15 @@ use Illuminate\Console\Command;
  * これは1日1回程度、削除の反映のためにすべてを同期するこれを実行すべき。
  * 例えば20,000レコードある場合APIは40アクセスする。
  * 直接DBをいじった場合に強制同期したいときは、比較用キャッシュを削除する
- * make hoge
  */
-class GetAppsData extends Command
+class GetAppsAllData extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'kintone:get-apps-data';
+    protected $signature = 'kintone:get-apps-all-data {appId?}';
 
     /**
      * The console command description.
@@ -36,7 +35,7 @@ class GetAppsData extends Command
     private $api;
 
     // const
-    const LIMIT = 500;
+    const LIMIT = 500;  // kintoneの取得レコード数上限
     const PRIMARY_KEY_NAME = 'レコード番号';
 
     /**
@@ -58,85 +57,57 @@ class GetAppsData extends Command
     {
         $this->api = new \CybozuHttp\Api\KintoneApi(new \CybozuHttp\Client(config('services.kintone.login')));
 
-        $this->getAppsData();
+        $appId = $this->argument('appId');
+
+        $this->getAppsData($appId);
     }
 
     /**
      * 更新のあったアプリの全レコードを取得
+     *
+     * @param int|null $appId
      */
-    private function getAppsData()
+    private function getAppsData(int $appId = null)
     {
-        foreach (\App\Model\Apps::all() as $app) {
+        if ($appId) {
+            $apps = [\App\Model\Apps::find($appId)];
+        } else {
+            $apps = \App\Model\Apps::all();
+        }
+
+        foreach ($apps as $app) {
+            // create table テーブル名はappId
+            $tableName = sprintf('app_%010d', $app->appId);
+            if (! \Schema::hasTable($tableName)) {
+                throw new \Exception('テーブル ' . $tableName . ' が存在しません。kintone:get-info, kintone:create-and-update-app-tablesを先に実行してください。それでもうまくいかない場合はfieldsテーブルを削除してから再度それぞれ実行してください。');
+            }
 
             // 全件取得
             $totalCount = 0;
             $offset = 0;
             while ($totalCount >= $offset) {
                 $records = $this->api->records()
-                    ->get($app['appId'], 'limit ' . self::LIMIT . ' offset ' . $offset);
-
-                $totalCount = $records['totalCount'];
+                    ->get($app->appId, 'limit ' . self::LIMIT . ' offset ' . $offset);
 
                 if ($offset == 0) {
                     // 初回
-                    dump(['name' => $app['name'], 'count' => $totalCount]);
-
-                    $appKeys = [];
-
-                    foreach ($records['records'] as $record) {
-                        foreach ($record as $key => $val) {
-
-                            // キーを取得してカラム名として登録。2階層以下はコロン:で区切る
-                            $type = $val['type'];
-                            $val = $val['value'];
-
-                            $appKeys[$key] = ['type' => $type];
-/*
-                            if (is_array($val)) {
-                                foreach ($val as $key2 => $val2) {
-                                    // @todo; これじゃだめ。requestによってあったりなかったりするから、やっぱjson突っ込むしかないかな。
-                                    // またはレコードの記録時になければカラム追加するロジック。。。うーん。
-                                    // これに限らず、データ構造が変わった場合のこと考えなきゃ。
-                                    $appKeys[$key . '/' . $key2] = ['type' => $type];
-                                }
-                            } else {
-                                $appKeys[$key] = ['type' => $type];
-                            }
-*/
-                        }
-                    }
-                    // create table テーブル名はappId
-                    $tableName = sprintf('app_%010d', $app['appId']);
-                    if (\Schema::hasTable($tableName)) {
-                        // スキーマ変更チェック
-                    } else {
-                        // error
-                    }
+                    $totalCount = $records['totalCount'];
+                    $this->info(sprintf("\n%s		%s件", $app->name, number_format($totalCount)));
                 }
 
                 $offset += self::LIMIT;
 
-                echo '.';
-
+                echo('.');
 
                 // insert update
                 foreach ($records['records'] as $record) {
                     $tmp = [];
                     foreach ($record as $key => $val) {
-                        // キーを取得してカラム名として登録。2階層以下はコロン:で区切る
+                        // キーを取得してカラム名として登録。2階層以下はコロン:で区切って別カラムにしたかったが、保留
                         $type = $val['type'];
-//if ($type == 'FILE') {
-//var_dump($val);
-//}
                         $val = $val['value'];
                         if (is_array($val)) {
-
-                            $tmp[$key] = json_encode($val);
-/*
-                        foreach ($val as $key2 => $val2) {
-                            $tmp[$key . '/' . $key2] = is_array($val2) ? json_encode(['json', $val2]) : $val2;
-                        }
-*/
+                            $tmp[$key] = json_encode($val);  // 一旦jsonで記録
                         } else {
                             if (in_array($type, ['NUMBER']) && $val == '') {
                                 // NUMBERがからの場合がある
@@ -148,7 +119,6 @@ class GetAppsData extends Command
 
                     $recordModel = \DB::table($tableName)
                         ->updateOrInsert([self::PRIMARY_KEY_NAME => $tmp[self::PRIMARY_KEY_NAME]], $tmp);
-
                 }
             }
         }

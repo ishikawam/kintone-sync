@@ -5,17 +5,10 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 
 /**
- * レコードの新規追加、更新
- * formより
-
- * アプリのすべてのレコードを取得し、DBにGET同期保存する
- * スキーマの変更も反映する
- * スキーマの更新、レコードの更新の操作ログを残す
+ * テーブルの作成、カラム追加&削除
+ * カラムの更新時はdrop column & add columnで作り直す
+ * Fieldsより
  *
- * これは1日1回程度、削除の反映のためにすべてを同期するこれを実行すべき。
- * 例えば20,000レコードある場合APIは40アクセスする。
- * 直接DBをいじった場合に強制同期したいときは、比較用キャッシュを削除する
- * make hoge
  */
 class CreateAndUpdateAppTables extends Command
 {
@@ -31,18 +24,21 @@ class CreateAndUpdateAppTables extends Command
      *
      * @var string
      */
-    protected $description = 'アプリのすべてのレコードを取得保存';
+    protected $description = 'テーブルの作成、カラム追加&削除';
 
 
     // KintoneApi
     private $api;
 
+    // GetAppsData強制実行フラグ
+    private $updatedApps = [];
+
     // const
-    const LIMIT = 500;
-    const PRIMARY_KEY_NAME = 'レコード番号';
 
     // typeマッピング
-    const MAP = [
+    // @see https://developer.cybozu.io/hc/ja/articles/202166330
+    // @todo; 網羅していない
+    const TYPE_MAP = [
         // bigint_required
         'RECORD_NUMBER' => 'bigint_required', // レコード番号 = primary key
         '__ID__' => 'bigint_required', // レコードID
@@ -95,17 +91,29 @@ class CreateAndUpdateAppTables extends Command
         $this->api = new \CybozuHttp\Api\KintoneApi(new \CybozuHttp\Client(config('services.kintone.login')));
 
         $this->updateTables();
+
+        $updatedApps = array_unique($this->updatedApps);
+        foreach ($this->updatedApps as $updatedAppId) {
+            $this->info('...waiting 3 seconds... ' . $updatedAppId);
+            sleep(3);
+            \Artisan::call('kintone:get-apps-all-data', [
+                    'appId' => $updatedAppId,
+                ]);
+        }
     }
 
     /**
-     * fields APIからアプリのテーブルスキーマを取得して変更があったらdelete table & create table
-     * appが削除された場合は、そのまま放置
+     * fields APIからアプリのフィールド(app_テーブルのスキーマに対応)を取得し、
+     * 追加フィールドはadd column。削除されたフィールドはdrop column
+     * 変更されたフィールドはdrop column & add columnで作り直す
+     * アプリが削除された場合は、そのまま放置
      *
-     * アプリごと、batchフラグを見て最新0を取得して最新1との差分を見てalter table実行。
-     * 最新1がなければcreate table。そもそも最新0がなければ何も実行しない。
-
-     * フィールド名がキー。カラム名。なので、フィールド名を変更されたらカラム削除＆カラム追加になる。
-     * その場合、強制AllGetやるように促したい。ってか、ここで変更検知したら絶対やったほうがいっか。 @todo;
+     * アプリごと、batchフラグを見て最新false(未マイグレート)を取得して最新true(マイグレート済み)との差分を見て判定する。
+     * 最新trueがなければcreate table。そもそも最新falseがなければ何も実行しない。
+     * 最新true, 最新falseの両方があればその差分をマイグレートする。
+     *
+     * フィールド名がキー＝カラム名。なので、フィールド名を変更されたらカラム削除＆カラム追加になる。
+     * 上記更新があったら即GetAppAllDataを実施する
      */
     private function updateTables()
     {
@@ -123,6 +131,8 @@ class CreateAndUpdateAppTables extends Command
             // create table テーブル名は'app_0000000000{appId}'
             $tableName = sprintf('app_%010d', $app['appId']);
 
+            $this->info('updated table: ' . $tableName);
+
             // 以前のスキーマを取得
             $preFields = \App\Model\Fields::where([
                     'appId' => $app['appId'],
@@ -135,111 +145,96 @@ class CreateAndUpdateAppTables extends Command
                 $post = json_decode($postFields->properties, true);
 
                 // 比較
-                foreach ($pre as $key => $tmp) {
+                foreach ($pre as $key => $val) {
                     if (! isset($post[$key])) {
                         // 削除された
-                    } elseif ($post[$key] == $tmp) {
+                    } elseif ($post[$key] == $val) {
                         // 変更なし
                         unset($pre[$key]);
                         unset($post[$key]);
                     } else {
                         // 変更された
-                        if (self::MAP[$post[$key]['type']] == self::MAP[$tmp['type']]) {
+                        if (self::TYPE_MAP[$post[$key]['type']] == self::TYPE_MAP[$val['type']]) {
                             // typeの変更が不要であればスルー
                             unset($pre[$key]);
                             unset($post[$key]);
                         } else {
-                            // typeの変更が必要であればテーブル作り直し
-                            $this->info('drop & create table. ' . $tableName);
-                            \Schema::dropIfExists($tableName);
+                            // typeの変更が必要であればカラム作り直し
                         }
                     }
                 }
 
                 \Log::info(json_encode(['drop column' => $pre, 'add column' => $post], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-                $this->info(json_encode(['drop column' => array_keys($pre), 'add column' => array_keys($post)], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                $this->warn(json_encode(['drop column' => array_keys($pre), 'add column' => array_keys($post)], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
 
-
-
-                \Schema::table(
-                    $tableName,
-                    function (\Illuminate\Database\Schema\Blueprint $table) use ($pre, $post) {
-                        foreach (array_keys($pre) as $key) {
-                            $table->dropColumn($key);
-                        }
-                        foreach ($post as $key => $tmp) {
-                            self::hoge($table, $key, $tmp['type']);
-                        }
-                    });
-
-/*
-                foreach (array_keys($pre) as $key) {
-                    // delete
+                // 作り直しがある場合のためにカラム削除とカラム追加は別々に行う
+                if (! empty($pre)) {
+                    $this->updatedApps[] = $app['appId'];
                     \Schema::table(
                         $tableName,
-                        function (\Illuminate\Database\Schema\Blueprint $table) use ($key) {
-                            $table->dropColumn($key);
+                        function (\Illuminate\Database\Schema\Blueprint $table) use ($pre) {
+                            foreach (array_keys($pre) as $key) {
+                                $table->dropColumn($key);
+                            }
                         });
                 }
-                foreach (array_keys($post) as $key) {
-                    // add
+                if (! empty($post)) {
+                    $this->updatedApps[] = $app['appId'];
                     \Schema::table(
                         $tableName,
-                        function (\Illuminate\Database\Schema\Blueprint $table) use ($key) {
-                            $table->string($key);
+                        function (\Illuminate\Database\Schema\Blueprint $table) use ($post) {
+                            foreach ($post as $key => $val) {
+                                self::addColumn($table, $key, $val['type']);
+                            }
                         });
                 }
-*/
+
             } else {
                 // テーブル新規作成
-                // 新規作成
-
                 if (\Schema::hasTable($tableName)) {
-                    // error
+                    throw new \Exception('テーブル ' . $tableName . ' が既にあります。テーブルを削除するかfieldsのbatchフラグを調整してください。');
                 }
 
+                $this->updatedApps[] = $app['appId'];
 
-                $properties = json_decode($postFields->properties, true);
+                $post = json_decode($postFields->properties, true);
 
-                \Log::info(json_encode(['create table' => $properties], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-                $this->info('create table: ' . $tableName);
+                \Log::info(json_encode(['create table' => $post], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                $this->warn('create table: ' . $tableName);
 
                 \Schema::create(
                     $tableName,
-                    function (\Illuminate\Database\Schema\Blueprint $table) use ($properties) {
+                    function (\Illuminate\Database\Schema\Blueprint $table) use ($post) {
                         // id, revision
                         $table->unsignedBigInteger('$id')->primary();
                         $table->unsignedBigInteger('$revision')->index();
 
-                        foreach ($properties as $key => $val) {
-                            self::hoge($table, $key, $val['type']);
+                        foreach ($post as $key => $val) {
+                            self::addColumn($table, $key, $val['type']);
                         }
                     });
 
             }
 
-            // batchをtrueに スキップしたものも含めてすべて
+            // batchをtrueに スキップしたものも含めてすべてマイグレート済フラグを立てる
             \App\Model\Fields::where([
                     'appId' => $app['appId'],
                     'batch' => false,
                 ])->update([
                         'batch' => true,
                     ]);
-
-            continue;
-
         }
     }
 
     /**
      * add schema to table
-     * @params Schema $table
-     * @params string $key
-     * @params string $type
+     * @param \Illuminate\Database\Schema\Blueprint $table
+     * @param string $key
+     * @param string $type
      */
-    private static function hoge(\Illuminate\Database\Schema\Blueprint &$table, string $key, string $type)
+    private static function addColumn(\Illuminate\Database\Schema\Blueprint &$table, string $key, string $type)
     {
-        switch (self::MAP[$type]) {
+        switch (self::TYPE_MAP[$type]) {
             case 'bigint_required':
                 $table->unsignedBigInteger($key)
                     ->comment($type);
