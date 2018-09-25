@@ -71,3 +71,6 @@ get-apps-all-data:
 
 get-apps-updated-data:
 	docker exec -it $(NAME)_php_1 bash -c "php artisan kintone:get-apps-updated-data"
+
+get-apps-deleted-data:
+	docker exec -it $(NAME)_php_1 bash -c "php artisan kintone:get-apps-deleted-data"

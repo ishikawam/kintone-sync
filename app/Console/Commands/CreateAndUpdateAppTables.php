@@ -35,16 +35,17 @@ class CreateAndUpdateAppTables extends Command
 
     // const
 
-    // typeマッピング
-    // @see https://developer.cybozu.io/hc/ja/articles/202166330
-    // @todo; 網羅していない
+    /**
+     * typeマッピング
+     * NUMBERはじめ数値は小数点あったりなかったり空白だったりがあり得るのでint系は使用できない
+     * @see https://developer.cybozu.io/hc/ja/articles/202166330
+     * @todo; 網羅していない
+     */
     const TYPE_MAP = [
         // bigint_required
         'RECORD_NUMBER' => 'bigint_required', // レコード番号 = primary key
         '__ID__' => 'bigint_required', // レコードID
         '__REVISION__' => 'bigint_required', // リビジョン
-        // bigint
-        'NUMBER' => 'bigint',  // stringの法が良いかもしれない
         // date
         'DATE' => 'date',
         // text
@@ -52,7 +53,6 @@ class CreateAndUpdateAppTables extends Command
         'MULTI_LINE_TEXT' => 'text',
         'CREATOR' => 'text', // 作成者
         'MODIFIER' => 'text', // 更新者
-        'CALC' => 'text', //
         'FILE' => 'text', //
         'DROP_DOWN' => 'text', //
         'RADIO_BUTTON' => 'text', //
@@ -62,10 +62,12 @@ class CreateAndUpdateAppTables extends Command
         // json
         'CATEGORY' => 'json',
         // string
+        'NUMBER' => 'string',  // 小数点あったりなかったり、空白、もありえるので型としてはstring。
         'CREATED_TIME' => 'string', // 作成日時
         'UPDATED_TIME' => 'string', // 更新日時
-        'DATETIME' => 'string', //
+        'DATETIME' => 'string', // 日時
         'STATUS' => 'string', // ステータス
+        'CALC' => 'string', // 計算
         // recoreds->get()ではとれないもの？不明なもの
         'REFERENCE_TABLE' => 'text', // 関連レコード一覧
         'GROUP' => 'text', // グループ
@@ -88,18 +90,22 @@ class CreateAndUpdateAppTables extends Command
      */
     public function handle()
     {
+        $this->question('start. ' . __CLASS__);
+
         $this->api = new \CybozuHttp\Api\KintoneApi(new \CybozuHttp\Client(config('services.kintone.login')));
 
         $this->updateTables();
 
         $updatedApps = array_unique($this->updatedApps);
         foreach ($this->updatedApps as $updatedAppId) {
-            $this->info('...waiting 3 seconds... ' . $updatedAppId);
-            sleep(3);
-            \Artisan::call('kintone:get-apps-all-data', [
+            $this->comment('...waiting 2 seconds... (app:' . $updatedAppId);
+            sleep(2);
+            $this->call('kintone:get-apps-all-data', [
                     'appId' => $updatedAppId,
                 ]);
         }
+
+        $this->question('end. ' . __CLASS__);
     }
 
     /**

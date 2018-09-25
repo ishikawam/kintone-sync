@@ -55,11 +55,15 @@ class GetAppsAllData extends Command
      */
     public function handle()
     {
+        $this->question('start. ' . __CLASS__);
+
         $this->api = new \CybozuHttp\Api\KintoneApi(new \CybozuHttp\Client(config('services.kintone.login')));
 
         $appId = $this->argument('appId');
 
         $this->getAppsData($appId);
+
+        $this->question('end. ' . __CLASS__);
     }
 
     /**
@@ -82,6 +86,11 @@ class GetAppsAllData extends Command
                 throw new \Exception('テーブル ' . $tableName . ' が存在しません。kintone:get-info, kintone:create-and-update-app-tablesを先に実行してください。それでもうまくいかない場合はfieldsテーブルを削除してから再度それぞれ実行してください。');
             }
 
+            // DB
+            $rows = \DB::table($tableName)
+                ->get()
+                ->keyBy(self::PRIMARY_KEY_NAME);
+
             // 全件取得
             $totalCount = 0;
             $offset = 0;
@@ -93,7 +102,7 @@ class GetAppsAllData extends Command
                 if ($offset == 0) {
                     // 初回
                     $totalCount = $records['totalCount'];
-                    $this->info(sprintf("\n%s		%s件", $app->name, number_format($totalCount)));
+                    $this->info(sprintf('%s		%s件', $app->name, number_format($totalCount)));
                 }
 
                 $offset += self::LIMIT;
@@ -102,24 +111,49 @@ class GetAppsAllData extends Command
 
                 // insert update
                 foreach ($records['records'] as $record) {
-                    $tmp = [];
+                    $postArray = [];
                     foreach ($record as $key => $val) {
                         // キーを取得してカラム名として登録。2階層以下はコロン:で区切って別カラムにしたかったが、保留
                         if (is_array($val['value'])) {
-                            $tmp[$key] = json_encode($val['value']);  // 一旦jsonで記録
+                            $postArray[$key] = json_encode($val['value']);  // 一旦jsonで記録
                         } else {
-                            if (in_array($val['type'], ['NUMBER']) && $val['value'] == '') {
-                                // NUMBERがからの場合がある
-                                $val['value'] = null;
-                            }
-                            $tmp[$key] = $val['value'];
+                            $postArray[$key] = $val['value'];
                         }
                     }
 
-                    // @todo; updateの変更ログは残していない
+                    $preArray = (array)($rows[$postArray[self::PRIMARY_KEY_NAME]] ?? []);
 
-                    $recordModel = \DB::table($tableName)
-                        ->updateOrInsert([self::PRIMARY_KEY_NAME => $tmp[self::PRIMARY_KEY_NAME]], $tmp);
+                    // kintoneからnullのものは入ってこないので合わせる
+                    $preArray = array_filter($preArray, function($c){return !is_null($c);});
+                    // 逆もしかり…
+                    $postArray = array_filter(\App\Lib\Util::castForDb($postArray), function($c){return !is_null($c);});
+
+                    // 差分比較
+                    if ($diff = \App\Lib\Util::arrayDiff($preArray, $postArray)) {
+                        if ($preArray) {
+                            // update
+                            echo 'U';
+                            \Log::info(json_encode([
+                                        'all update: ' . $app->appId . ':' . $postArray[self::PRIMARY_KEY_NAME],
+                                        $diff,
+                                    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                            \DB::table($tableName)
+                                ->where(self::PRIMARY_KEY_NAME, $postArray[self::PRIMARY_KEY_NAME])
+                                ->update($postArray);
+
+                        } else {
+                            // insert
+                            echo 'I';
+/* insertのログはいらない
+                            \Log::info(json_encode([
+                                        'all insert: ' . $app->appId . ':' . $postArray[self::PRIMARY_KEY_NAME],
+                                        $postArray,
+                                    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+*/
+                            \DB::table($tableName)
+                                ->insert($postArray);
+                        }
+                    }
 
                     // 削除用にidを保管
                     $ids[$record['$id']['value']] = true;
@@ -128,13 +162,19 @@ class GetAppsAllData extends Command
 
             // 削除
             foreach (\DB::table($tableName)->get() as $val) {
-//            foreach (\DB::table($tableName)->get(['$id']) as $val) {
                 if (! isset($ids[$val->{'$id'}])) {
-                    \Log::info(json_encode(['delete record. APP: ' . $app->appId, $val], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                    \Log::info(json_encode([
+                                'delete record. APP: ' . $app->appId,
+                                $val,
+                            ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
                     echo('D');
-                    \DB::table($tableName)->where('$id', $val->{'$id'})->delete();
+                    \DB::table($tableName)
+                        ->where('$id', $val->{'$id'})
+                        ->delete();
                 }
             }
+
+            $this->info('');
         }
     }
 }

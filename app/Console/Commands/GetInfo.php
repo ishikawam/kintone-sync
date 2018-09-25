@@ -47,6 +47,8 @@ class GetInfo extends Command
      */
     public function handle()
     {
+        $this->question('start. ' . __CLASS__);
+
         $this->api = new \CybozuHttp\Api\KintoneApi(new \CybozuHttp\Client(config('services.kintone.login')));
 
         // アプリ
@@ -72,6 +74,8 @@ class GetInfo extends Command
         // レイアウト
         $this->info('getLayout');
         $this->getLayout(array_keys($apps));
+
+        $this->question('end. ' . __CLASS__);
     }
 
     /**
@@ -110,17 +114,13 @@ class GetInfo extends Command
             $row->{'modifier/name'} = $app['modifier']['name'];
             $row->spaceId = $app['spaceId'];
             $row->threadId = $app['threadId'];
-            $postArray = self::castForDb($row->toArray());
+            $postArray = \App\Lib\Util::castForDb($row->toArray());
             $row->save();
 
             // 差分比較
-            $diff = [
-                'pre' => array_diff($preArray, $postArray),
-                'post' => array_diff($postArray, $preArray),
-            ];
-            if ($diff != ['pre' => null, 'post' => null]) {
+            if ($diff = \App\Lib\Util::arrayDiff($preArray, $postArray)) {
                 \Log::info(json_encode(['diff app: ' . $row->appId, $diff], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-                $this->warn('diff app: ' . $row->appId);
+                $this->comment('diff app: ' . $row->appId);
             }
         }
 
@@ -128,7 +128,7 @@ class GetInfo extends Command
         foreach (\App\Model\Apps::all() as $row) {
             if (! isset($apps[$row->appId])) {
                 \Log::info(json_encode(['delete app', $row->toArray()], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-                $this->warn('delete app: ' . $row->appId);
+                $this->comment('delete app: ' . $row->appId);
                 $row->delete();
             }
         }
@@ -165,17 +165,13 @@ class GetInfo extends Command
             $row->isGuest = $space['isGuest'];
             $row->fixedMember = $space['fixedMember'];
             // $space['attachedApps'] は使用しない
-            $postArray = self::castForDb($row->toArray());
+            $postArray = \App\Lib\Util::castForDb($row->toArray());
             $row->save();
 
             // 差分比較
-            $diff = [
-                'pre' => array_diff($preArray, $postArray),
-                'post' => array_diff($postArray, $preArray),
-            ];
-            if ($diff != ['pre' => null, 'post' => null]) {
+            if ($diff = \App\Lib\Util::arrayDiff($preArray, $postArray)) {
                 \Log::info(json_encode(['diff spaces: ' . $row->id, $diff], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-                $this->warn('diff spaces: ' . $row->id);
+                $this->comment('diff spaces: ' . $row->id);
             }
         }
 
@@ -183,7 +179,7 @@ class GetInfo extends Command
         foreach (\App\Model\Spaces::all() as $row) {
             if (! in_array($row->id, $spaceIds)) {
                 \Log::info(json_encode(['delete spaces', $row->toArray()], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-                $this->warn('delete spaces: ' . $row->id);
+                $this->comment('delete spaces: ' . $row->id);
                 $row->delete();
             }
         }
@@ -202,17 +198,13 @@ class GetInfo extends Command
             $preArray = $row->toArray();
             $row->appId = $appId;
             $row->properties = json_encode($data, JSON_UNESCAPED_UNICODE);
-            $postArray = self::castForDb($row->toArray());
+            $postArray = \App\Lib\Util::castForDb($row->toArray());
             $row->save();
 
             // 差分比較
-            $diff = [
-                'pre' => array_diff($preArray, $postArray),
-                'post' => array_diff($postArray, $preArray),
-            ];
-            if ($diff != ['pre' => null, 'post' => null]) {
+            if ($diff = \App\Lib\Util::arrayDiff($preArray, $postArray)) {
                 \Log::info(json_encode(['diff form: ' . $row->id, $diff], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-                $this->warn('diff form: ' . $row->id);
+                $this->comment('diff form: ' . $row->appId);
             }
         }
 
@@ -220,7 +212,7 @@ class GetInfo extends Command
         foreach (\App\Model\Form::all() as $row) {
             if (! in_array($row->appId, $appIds)) {
                 \Log::info(json_encode(['delete form', $row->toArray()], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-                $this->warn('delete form: ' . $row->id);
+                $this->comment('delete form: ' . $row->id);
                 $row->delete();
             }
         }
@@ -236,12 +228,17 @@ class GetInfo extends Command
     {
         foreach ($appIds as $appId) {
             $data = $this->api->app()->getFields($appId);
+
             $row = \App\Model\Fields::firstOrCreate([
                     'appId' => $appId,
                     'revision' => $data['revision'],
                 ], [
                     'properties' => json_encode($data['properties'], JSON_UNESCAPED_UNICODE),
                 ]);
+
+            if ($row->batch === null) {
+                $this->comment('new fields: ' . $appId . ', ' . $data['revision']);
+            }
         }
     }
 
@@ -262,19 +259,5 @@ class GetInfo extends Command
                     'layout' => json_encode($data['layout'], JSON_UNESCAPED_UNICODE),
                 ]);
         }
-    }
-
-    /**
-     * DBとAPIで取得した値との比較をするために、booleanを数値にキャスト変換
-     * @param array $arr
-     */
-    private static function castForDb(array $arr)
-    {
-        foreach ($arr as &$val) {
-            if (is_bool($val)) {
-                $val = (int)$val;
-            }
-        }
-        return $arr;
     }
 }

@@ -7,10 +7,9 @@ use Illuminate\Console\Command;
 /**
  * アプリの更新されたレコードを取得し、DBにGET同期保存する
  * 更新があった場合はinsert, updateする
- * その上でtotalCountとtableレコード総数を比較してずれていたら仕方ないのでGetAppsAllDataを実行する
  * レコードの更新の操作ログを残す
  *
- * これは5分に1回程度。(1日288アクセス消費)
+ * これは5分に1回程度。(1アプリにつき1日最低288アクセス消費)
  * 直接DBをいじった場合に強制同期したいときは、比較用キャッシュを削除する
  */
 class GetAppsUpdatedData extends Command
@@ -27,7 +26,7 @@ class GetAppsUpdatedData extends Command
      *
      * @var string
      */
-    protected $description = 'アプリのすべてのレコードを取得保存';
+    protected $description = 'アプリの更新されたのレコードを取得保存';
 
 
     // KintoneApi
@@ -54,11 +53,15 @@ class GetAppsUpdatedData extends Command
      */
     public function handle()
     {
+        $this->question('start. ' . __CLASS__);
+
         $this->api = new \CybozuHttp\Api\KintoneApi(new \CybozuHttp\Client(config('services.kintone.login')));
 
         $appId = $this->argument('appId');
 
         $this->getAppsData($appId);
+
+        $this->question('end. ' . __CLASS__);
     }
 
     /**
@@ -81,7 +84,7 @@ class GetAppsUpdatedData extends Command
                 throw new \Exception('テーブル ' . $tableName . ' が存在しません。kintone:get-info, kintone:create-and-update-app-tablesを先に実行してください。それでもうまくいかない場合はfieldsテーブルを削除してから再度それぞれ実行してください。');
             }
 
-            // DBから最終更新日、件数を取得
+            // DBから最終更新日を取得
             $latest = \DB::table($tableName)
                 ->orderByDesc('更新日時')
                 ->first(['更新日時']);
@@ -96,29 +99,62 @@ class GetAppsUpdatedData extends Command
                 if ($offset == 0) {
                     // 初回
                     $totalCount = $records['totalCount'];
-                    $this->info(sprintf("\n%s		%s件", $app->name, number_format($totalCount)));
+                    $this->info(sprintf('%s		%s件', $app->name, number_format($totalCount)));
                 }
 
                 $offset += self::LIMIT;
 
                 // insert update
                 foreach ($records['records'] as $record) {
-                    $tmp = [];
+                    $postArray = [];
                     foreach ($record as $key => $val) {
                         // キーを取得してカラム名として登録。2階層以下はコロン:で区切って別カラムにしたかったが、保留
                         if (is_array($val['value'])) {
-                            $tmp[$key] = json_encode($val['value']);  // 一旦jsonで記録
+                            $postArray[$key] = json_encode($val['value']);  // 一旦jsonで記録
                         } else {
                             if (in_array($val['type'], ['NUMBER']) && $val['value'] == '') {
                                 // NUMBERがからの場合がある
                                 $val['value'] = null;
                             }
-                            $tmp[$key] = $val['value'];
+                            $postArray[$key] = $val['value'];
                         }
                     }
 
-                    $recordModel = \DB::table($tableName)
-                        ->updateOrInsert([self::PRIMARY_KEY_NAME => $tmp[self::PRIMARY_KEY_NAME]], $tmp);
+                    $preArray = (array)\DB::table($tableName)
+                        ->where(self::PRIMARY_KEY_NAME, $postArray[self::PRIMARY_KEY_NAME])
+                        ->select()
+                        ->first();
+
+                    // kintoneからnullのものは入ってこないので合わせる
+                    $preArray = array_filter($preArray, function($c){return !is_null($c);});
+                    // 逆もしかり…
+                    $postArray = array_filter(\App\Lib\Util::castForDb($postArray), function($c){return !is_null($c);});
+
+                    if ($diff = \App\Lib\Util::arrayDiff($preArray, $postArray)) {
+                        if ($preArray) {
+                            // update
+                            echo 'U';
+                            \Log::info(json_encode([
+                                        'update: ' . $app->appId . ':' . $postArray[self::PRIMARY_KEY_NAME],
+                                        $diff,
+                                    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                            \DB::table($tableName)
+                                ->where(self::PRIMARY_KEY_NAME, $postArray[self::PRIMARY_KEY_NAME])
+                                ->update($postArray);
+
+                        } else {
+                            // insert
+                            echo 'I';
+/* insertのログはいらない
+                            \Log::info(json_encode([
+                                        'insert: ' . $app->appId . ':' . $postArray[self::PRIMARY_KEY_NAME],
+                                        $postArray,
+                                    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+*/
+                            \DB::table($tableName)
+                                ->insert($postArray);
+                        }
+                    }
                 }
             }
         }
