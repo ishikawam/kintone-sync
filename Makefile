@@ -2,9 +2,10 @@
 
 # mac: homebrew, git, docker, php 7.1
 
-NAME=kintone-docker-php
+NAME=kintone-sync
 
 setup:
+# todo awscli, amazon-ecs-cliは不要だし、すでに入っている場合にエラーになる
 	brew install git jq awscli amazon-ecs-cli
 	ln -sf .env.d/.env_local .env
 	php artisan key:generate
@@ -16,6 +17,7 @@ install:
 	make up
 	docker exec -it $(NAME)_php_1 bash -c "php composer.phar install"
 	docker exec -it $(NAME)_php_1 bash -c "php artisan clear-compiled"
+	make migrate
 
 migrate:
 	docker exec -it $(NAME)_php_1 bash -c "php artisan migrate"

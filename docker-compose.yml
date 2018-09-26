@@ -1,4 +1,4 @@
-# kintone-docker-php
+# kintone-sync
 
 version: "2"
 services:

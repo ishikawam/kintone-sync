@@ -1,5 +1,7 @@
-kintone-sync-docker
+kintone-sync
 ===================
+
+dockerの動作環境が必要です。
 
 ## setup
 

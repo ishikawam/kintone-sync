@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'kintone-sync-docker'),
+    'name' => env('APP_NAME', 'kintone-sync'),
 
     /*
     |--------------------------------------------------------------------------
