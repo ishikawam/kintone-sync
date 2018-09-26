@@ -2,8 +2,6 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-
 /**
  * アプリの更新されたレコードを取得し、DBにGET同期保存する
  * 更新があった場合はinsert, updateする
@@ -12,7 +10,7 @@ use Illuminate\Console\Command;
  * これは5分に1回程度。(1アプリにつき1日最低288アクセス消費)
  * 直接DBをいじった場合に強制同期したいときは、比較用キャッシュを削除する
  */
-class GetAppsUpdatedData extends Command
+class GetAppsUpdatedData extends \App\Console\Base
 {
     /**
      * The name and signature of the console command.
@@ -32,9 +30,6 @@ class GetAppsUpdatedData extends Command
     // KintoneApi
     private $api;
 
-    // const
-    const LIMIT = 500;  // kintoneの取得レコード数上限
-    const PRIMARY_KEY_NAME = 'レコード番号';
 
     /**
      * Create a new command instance.
@@ -92,6 +87,7 @@ class GetAppsUpdatedData extends Command
             // 更新分を取得
             $totalCount = 0;
             $offset = 0;
+            $lf = false;
             while ($totalCount >= $offset) {
                 $records = $this->api->records()
                     ->get($app->appId, '更新日時 > "' . $latest->更新日時 . '" limit ' . self::LIMIT . ' offset ' . $offset);
@@ -112,10 +108,6 @@ class GetAppsUpdatedData extends Command
                         if (is_array($val['value'])) {
                             $postArray[$key] = json_encode($val['value']);  // 一旦jsonで記録
                         } else {
-                            if (in_array($val['type'], ['NUMBER']) && $val['value'] == '') {
-                                // NUMBERがからの場合がある
-                                $val['value'] = null;
-                            }
                             $postArray[$key] = $val['value'];
                         }
                     }
@@ -130,32 +122,15 @@ class GetAppsUpdatedData extends Command
                     // 逆もしかり…
                     $postArray = array_filter(\App\Lib\Util::castForDb($postArray), function($c){return !is_null($c);});
 
-                    if ($diff = \App\Lib\Util::arrayDiff($preArray, $postArray)) {
-                        if ($preArray) {
-                            // update
-                            echo 'U';
-                            \Log::info(json_encode([
-                                        'update: ' . $app->appId . ':' . $postArray[self::PRIMARY_KEY_NAME],
-                                        $diff,
-                                    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-                            \DB::table($tableName)
-                                ->where(self::PRIMARY_KEY_NAME, $postArray[self::PRIMARY_KEY_NAME])
-                                ->update($postArray);
-
-                        } else {
-                            // insert
-                            echo 'I';
-/* insertのログはいらない
-                            \Log::info(json_encode([
-                                        'insert: ' . $app->appId . ':' . $postArray[self::PRIMARY_KEY_NAME],
-                                        $postArray,
-                                    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-*/
-                            \DB::table($tableName)
-                                ->insert($postArray);
-                        }
+                    // 差分をみてinsert and update
+                    if ($this->insertAndUpdate($tableName, $app->appId, $preArray, $postArray)) {
+                        $lf = true;
                     }
                 }
+            }
+
+            if ($lf) {
+                $this->info('');
             }
         }
     }

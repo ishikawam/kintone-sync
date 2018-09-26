@@ -2,8 +2,6 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-
 /**
  * アプリのすべてのレコードを取得し、DBにGET同期保存する
  * レコードの更新の操作ログを残す
@@ -14,7 +12,7 @@ use Illuminate\Console\Command;
  * APIは、例えば20,000レコードある場合APIは40アクセス消費する。
  * 直接DBをいじった場合に強制同期したいときはfieldsのレコードを削除する等して対応する。
  */
-class GetAppsAllData extends Command
+class GetAppsAllData extends \App\Console\Base
 {
     /**
      * The name and signature of the console command.
@@ -34,9 +32,6 @@ class GetAppsAllData extends Command
     // KintoneApi
     private $api;
 
-    // const
-    const LIMIT = 500;  // kintoneの取得レコード数上限
-    const PRIMARY_KEY_NAME = 'レコード番号';
 
     /**
      * Create a new command instance.
@@ -94,7 +89,7 @@ class GetAppsAllData extends Command
             // 全件取得
             $totalCount = 0;
             $offset = 0;
-            $ids = [];
+            $ids = [];  // あとで削除判定に使用する
             while ($totalCount >= $offset) {
                 $records = $this->api->records()
                     ->get($app->appId, 'limit ' . self::LIMIT . ' offset ' . $offset);
@@ -128,32 +123,8 @@ class GetAppsAllData extends Command
                     // 逆もしかり…
                     $postArray = array_filter(\App\Lib\Util::castForDb($postArray), function($c){return !is_null($c);});
 
-                    // 差分比較
-                    if ($diff = \App\Lib\Util::arrayDiff($preArray, $postArray)) {
-                        if ($preArray) {
-                            // update
-                            echo 'U';
-                            \Log::info(json_encode([
-                                        'all update: ' . $app->appId . ':' . $postArray[self::PRIMARY_KEY_NAME],
-                                        $diff,
-                                    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-                            \DB::table($tableName)
-                                ->where(self::PRIMARY_KEY_NAME, $postArray[self::PRIMARY_KEY_NAME])
-                                ->update($postArray);
-
-                        } else {
-                            // insert
-                            echo 'I';
-/* insertのログはいらない
-                            \Log::info(json_encode([
-                                        'all insert: ' . $app->appId . ':' . $postArray[self::PRIMARY_KEY_NAME],
-                                        $postArray,
-                                    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-*/
-                            \DB::table($tableName)
-                                ->insert($postArray);
-                        }
-                    }
+                    // 差分をみてinsert and update
+                    $this->insertAndUpdate($tableName, $app->appId, $preArray, $postArray);
 
                     // 削除用にidを保管
                     $ids[$record['$id']['value']] = true;

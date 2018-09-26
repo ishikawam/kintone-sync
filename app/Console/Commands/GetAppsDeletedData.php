@@ -32,9 +32,6 @@ class GetAppsDeletedData extends Command
     // KintoneApi
     private $api;
 
-    // const
-    const LIMIT = 500;  // kintoneの取得レコード数上限
-    const PRIMARY_KEY_NAME = 'レコード番号';
 
     /**
      * Create a new command instance.
@@ -97,6 +94,7 @@ class GetAppsDeletedData extends Command
 
             // delete
             if ($totalCount < $count) {
+                // これは正確な判定はできない。deleteしてinsertした場合等。簡易チェックで正確なのはGetAppsAllDataに任せる。
                 $this->comment('...waiting 2 seconds... (app:' . $app->appId);
                 sleep(2);
                 $this->call('kintone:get-apps-all-data', [
