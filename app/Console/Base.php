@@ -12,7 +12,8 @@ class Base extends Command
     /**
      * const
      */
-    const LIMIT = 500;  // kintoneの取得レコード数上限
+    const LIMIT_READ = 500;  // kintoneの取得レコード数上限
+    const LIMIT_WRITE = 100;  // kintoneの書き込みレコード数上限
     const PRIMARY_KEY_NAME = 'レコード番号';
 
     /**

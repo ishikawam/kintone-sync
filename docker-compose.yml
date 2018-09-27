@@ -19,7 +19,7 @@ services:
     volumes:
       - .:/var/www/kintone
     working_dir: /var/www/kintone
-    mem_limit: 268435456  # 256MB. loal dockerではm, gが使用できない。
+    mem_limit: 1073741824  # 1GB. local dockerではm, gが使用できない。
     tty: true
     stdin_open: true
     privileged: true

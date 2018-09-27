@@ -73,7 +73,7 @@ class GetAppsUpdatedData extends \App\Console\Base
         }
 
         foreach ($apps as $app) {
-            // create table テーブル名はappId
+            // テーブル名はappId
             $tableName = sprintf('app_%010d', $app->appId);
             if (! \Schema::hasTable($tableName)) {
                 throw new \Exception('テーブル ' . $tableName . ' が存在しません。kintone:get-info, kintone:create-and-update-app-tablesを先に実行してください。それでもうまくいかない場合はfieldsテーブルを削除してから再度それぞれ実行してください。');
@@ -83,6 +83,11 @@ class GetAppsUpdatedData extends \App\Console\Base
             $latest = \DB::table($tableName)
                 ->orderByDesc('更新日時')
                 ->first(['更新日時']);
+            if ($latest == null) {
+                $whereLatest = '';
+            } else {
+                $whereLatest = ' 更新日時 > "' . $latest->更新日時 . '" ';
+            }
 
             // 更新分を取得
             $totalCount = 0;
@@ -90,7 +95,7 @@ class GetAppsUpdatedData extends \App\Console\Base
             $lf = false;
             while ($totalCount >= $offset) {
                 $records = $this->api->records()
-                    ->get($app->appId, '更新日時 > "' . $latest->更新日時 . '" limit ' . self::LIMIT . ' offset ' . $offset);
+                    ->get($app->appId, $whereLatest . 'limit ' . self::LIMIT_READ . ' offset ' . $offset);
 
                 if ($offset == 0) {
                     // 初回
@@ -98,7 +103,7 @@ class GetAppsUpdatedData extends \App\Console\Base
                     $this->info(sprintf('%s		%s件', $app->name, number_format($totalCount)));
                 }
 
-                $offset += self::LIMIT;
+                $offset += self::LIMIT_READ;
 
                 // insert update
                 foreach ($records['records'] as $record) {

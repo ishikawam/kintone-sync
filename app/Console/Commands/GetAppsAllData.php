@@ -75,13 +75,14 @@ class GetAppsAllData extends \App\Console\Base
         }
 
         foreach ($apps as $app) {
-            // create table テーブル名はappId
+            // テーブル名はappId
             $tableName = sprintf('app_%010d', $app->appId);
             if (! \Schema::hasTable($tableName)) {
                 throw new \Exception('テーブル ' . $tableName . ' が存在しません。kintone:get-info, kintone:create-and-update-app-tablesを先に実行してください。それでもうまくいかない場合はfieldsテーブルを削除してから再度それぞれ実行してください。');
             }
 
             // DB
+            // ここメモリを結構使う。 "Allowed memory size of〜" のエラーが出たら調整すること
             $rows = \DB::table($tableName)
                 ->get()
                 ->keyBy(self::PRIMARY_KEY_NAME);
@@ -92,7 +93,7 @@ class GetAppsAllData extends \App\Console\Base
             $ids = [];  // あとで削除判定に使用する
             while ($totalCount >= $offset) {
                 $records = $this->api->records()
-                    ->get($app->appId, 'limit ' . self::LIMIT . ' offset ' . $offset);
+                    ->get($app->appId, 'limit ' . self::LIMIT_READ . ' offset ' . $offset);
 
                 if ($offset == 0) {
                     // 初回
@@ -100,7 +101,7 @@ class GetAppsAllData extends \App\Console\Base
                     $this->info(sprintf('%s		%s件', $app->name, number_format($totalCount)));
                 }
 
-                $offset += self::LIMIT;
+                $offset += self::LIMIT_READ;
 
                 echo('.');
 
