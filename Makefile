@@ -6,9 +6,9 @@ NAME=kintone-sync
 
 setup:
 # todo awscli, amazon-ecs-cliは不要だし、すでに入っている場合にエラーになる
-	brew install git jq awscli amazon-ecs-cli
-	cp -n .env.sample/.env_local .env
-	cp -n config.sample/kintone.php config/kintone.php
+	-brew install git jq awscli amazon-ecs-cli
+	-cp -n .env.sample/.env_local .env
+	-cp -n config.sample/kintone.php config/kintone.php
 	php artisan key:generate
 
 install:
