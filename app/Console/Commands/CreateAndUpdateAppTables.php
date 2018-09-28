@@ -170,7 +170,7 @@ class CreateAndUpdateAppTables extends Command
                     }
                 }
 
-                \Log::info(json_encode(['drop column' => $pre, 'add column' => $post], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                \Log::info(['drop column' => $pre, 'add column' => $post]);
                 $this->warn(json_encode(['drop column' => array_keys($pre), 'add column' => array_keys($post)], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
 
                 // 作り直しがある場合のためにカラム削除とカラム追加は別々に行う
@@ -205,7 +205,7 @@ class CreateAndUpdateAppTables extends Command
 
                 $post = json_decode($postFields->properties, true);
 
-                \Log::info(json_encode(['create table' => $post], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                \Log::info(['create table' => $post]);
                 $this->warn('create table: ' . $tableName);
 
                 \Schema::create(

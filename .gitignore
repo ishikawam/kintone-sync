@@ -18,3 +18,5 @@ Thumbs.db
 /GPATH
 /GRTAGS
 /GTAGS
+
+config/kintone.php

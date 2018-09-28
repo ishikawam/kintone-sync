@@ -29,10 +29,10 @@ class Base extends Command
             if ($preArray) {
                 // update
                 echo 'U';
-                \Log::info(json_encode([
-                            'update: ' . $appId . ':' . $postArray[self::PRIMARY_KEY_NAME],
-                            $diff,
-                        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                \Log::info([
+                        'update: ' . $appId . ':' . $postArray[self::PRIMARY_KEY_NAME],
+                        $diff,
+                    ]);
                 try {
                     \DB::table($tableName)
                         ->where(self::PRIMARY_KEY_NAME, $postArray[self::PRIMARY_KEY_NAME])
@@ -55,10 +55,10 @@ class Base extends Command
                 // insert
                 echo 'I';
 /* insertのログはいらない
-   \Log::info(json_encode([
+   \Log::info([
    'insert: ' . $appId . ':' . $postArray[self::PRIMARY_KEY_NAME],
    $postArray,
-   ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+   ]);
 */
                 try {
                     \DB::table($tableName)

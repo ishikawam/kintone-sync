@@ -119,7 +119,7 @@ class GetInfo extends Command
 
             // 差分比較
             if ($diff = \App\Lib\Util::arrayDiff($preArray, $postArray)) {
-                \Log::info(json_encode(['diff app: ' . $row->appId, $diff], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                \Log::info(['diff app: ' . $row->appId, $diff]);
                 $this->comment('diff app: ' . $row->appId);
             }
         }
@@ -127,7 +127,7 @@ class GetInfo extends Command
         // 次にkintoneで削除されたレコードを検索してDBのレコードを削除
         foreach (\App\Model\Apps::all() as $row) {
             if (! isset($apps[$row->appId])) {
-                \Log::info(json_encode(['delete app', $row->toArray()], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                \Log::info(['delete app', $row->toArray()]);
                 $this->comment('delete app: ' . $row->appId);
                 $row->delete();
             }
@@ -170,7 +170,7 @@ class GetInfo extends Command
 
             // 差分比較
             if ($diff = \App\Lib\Util::arrayDiff($preArray, $postArray)) {
-                \Log::info(json_encode(['diff spaces: ' . $row->id, $diff], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                \Log::info(['diff spaces: ' . $row->id, $diff]);
                 $this->comment('diff spaces: ' . $row->id);
             }
         }
@@ -178,7 +178,7 @@ class GetInfo extends Command
         // 次にkintoneで削除されたレコードを検索してDBのレコードを削除
         foreach (\App\Model\Spaces::all() as $row) {
             if (! in_array($row->id, $spaceIds)) {
-                \Log::info(json_encode(['delete spaces', $row->toArray()], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                \Log::info(['delete spaces', $row->toArray()]);
                 $this->comment('delete spaces: ' . $row->id);
                 $row->delete();
             }
@@ -203,7 +203,7 @@ class GetInfo extends Command
 
             // 差分比較
             if ($diff = \App\Lib\Util::arrayDiff($preArray, $postArray)) {
-                \Log::info(json_encode(['diff form: ' . $row->id, $diff], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                \Log::info(['diff form: ' . $row->id, $diff]);
                 $this->comment('diff form: ' . $row->appId);
             }
         }
@@ -211,7 +211,7 @@ class GetInfo extends Command
         // 次にkintoneで削除されたレコードを検索してDBのレコードを削除
         foreach (\App\Model\Form::all() as $row) {
             if (! in_array($row->appId, $appIds)) {
-                \Log::info(json_encode(['delete form', $row->toArray()], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                \Log::info(['delete form', $row->toArray()]);
                 $this->comment('delete form: ' . $row->id);
                 $row->delete();
             }

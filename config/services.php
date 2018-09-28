@@ -35,7 +35,10 @@ return [
         'secret' => env('STRIPE_SECRET'),
     ],
 
-    // Kintone
+    /**
+     * Kintone
+     * .envから読むものとconfig/kintone.phpから読むものとを混在させている
+     */
     'kintone' => [
         'login' => [
             'domain' => env('KINTONE_DOMAIN', 'cybozu.com'),
@@ -45,5 +48,7 @@ return [
         ],
 
         'ignore_apps' => array_filter(explode(',', env('KINTONE_IGNORE_APPS'))),
+
+        'custom' => config('kintone'),
     ],
 ];

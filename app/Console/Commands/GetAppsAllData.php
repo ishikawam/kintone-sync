@@ -135,10 +135,10 @@ class GetAppsAllData extends \App\Console\Base
             // 削除
             foreach (\DB::table($tableName)->get() as $val) {
                 if (! isset($ids[$val->{'$id'}])) {
-                    \Log::info(json_encode([
-                                'delete record. APP: ' . $app->appId,
-                                $val,
-                            ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                    \Log::info([
+                            'delete record. APP: ' . $app->appId,
+                            $val,
+                        ]);
                     echo('D');
                     \DB::table($tableName)
                         ->where('$id', $val->{'$id'})
