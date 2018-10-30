@@ -9,6 +9,7 @@ setup:
 	-brew install git jq awscli amazon-ecs-cli
 	-cp -n .env.sample/.env_local .env
 	-cp -n config.sample/kintone.php config/kintone.php
+	php composer.phar install
 	php artisan key:generate
 
 install:
