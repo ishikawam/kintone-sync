@@ -39,46 +39,46 @@ class CreateAndUpdateAppTables extends Command
      * typeマッピング
      * NUMBERはじめ数値は小数点あったりなかったり空白だったりがあり得るのでint系は使用できない
      * @see https://developer.cybozu.io/hc/ja/articles/202166330
-     * @todo; 網羅していない
      */
     const TYPE_MAP = [
         // bigint_required
-        'RECORD_NUMBER' => 'bigint_required', // レコード番号 = primary key
-        '__ID__' => 'bigint_required', // レコードID
-        '__REVISION__' => 'bigint_required', // リビジョン
+        'RECORD_NUMBER' => 'bigint_required',  // レコード番号 = primary key
+        '__ID__' => 'bigint_required',  // レコードID
+        '__REVISION__' => 'bigint_required',  // リビジョン
         // date
-        'DATE' => 'date',
+        'DATE' => 'date',  // 日付
         // text
-        'SINGLE_LINE_TEXT' => 'text',
-        'MULTI_LINE_TEXT' => 'text',
-        'CREATOR' => 'text', // 作成者
-        'MODIFIER' => 'text', // 更新者
-        'FILE' => 'text', //
-        'DROP_DOWN' => 'text', //
-        'RADIO_BUTTON' => 'text', //
-        'CHECK_BOX' => 'text', //
-        'LINK' => 'text', // リンク
-        'STATUS_ASSIGNEE' => 'text', // 作業者
+        'SINGLE_LINE_TEXT' => 'text',  // 文字列（1行）
+        'MULTI_LINE_TEXT' => 'text',  // 文字列（複数行）
+        'LINK' => 'text',  // リンク
         'RICH_TEXT' => 'text',  // リッチエディター
-        // json
-        'CATEGORY' => 'json',
+        // json list
+        'CATEGORY' => 'json',  // カテゴリー
         'GROUP_SELECT' => 'json',  // グループ選択フィールド
         'USER_SELECT' => 'json',  // ユーザー選択
-        'SUBTABLE' => 'json',  // テーブル
-        // string
-        'NUMBER' => 'string',  // 小数点あったりなかったり、空白、もありえるので型としてはstring。
-        'CREATED_TIME' => 'string', // 作成日時
-        'UPDATED_TIME' => 'string', // 更新日時
-        'DATETIME' => 'string', // 日時
-        'STATUS' => 'string', // ステータス
-        'CALC' => 'string', // 計算
-        // recoreds->get()ではとれないもの？不明なもの
-        'REFERENCE_TABLE' => 'text', // 関連レコード一覧
-        'GROUP' => 'text', // グループ
-        // 以下、未検証
-        'MULTI_SELECT' => 'json',  // 複数選択
-        'TIME' => 'text',  // 時刻
         'ORGANIZATION_SELECT' => 'json',  // 組織選択フィールド
+        'SUBTABLE' => 'json',  // テーブル
+        'CHECK_BOX' => 'json',  // チェックボックス
+        'MULTI_SELECT' => 'json',  // 複数選択
+        'FILE' => 'json',  // 添付ファイル
+        'STATUS_ASSIGNEE' => 'json',  // 作業者
+        // json object
+        'CREATOR' => 'json',  // 作成者
+        'MODIFIER' => 'json',  // 更新者
+        // string
+        'NUMBER' => 'string_short',  // 小数点あったりなかったり、空白、もありえるので型としてはstring。
+        'CREATED_TIME' => 'string_short',  // 作成日時
+        'UPDATED_TIME' => 'string_short',  // 更新日時
+        'DATETIME' => 'string_short',  // 日時
+        'TIME' => 'string_short',  // 時刻
+        'STATUS' => 'string_short',  // ステータス
+        'CALC' => 'string',  // 計算
+        'DROP_DOWN' => 'string',  // ドロップダウン
+        'RADIO_BUTTON' => 'string',  // ラジオボタン
+        // recoreds->get()ではとれないもの？不明なもの
+        'REFERENCE_TABLE' => 'text',  // 関連レコード一覧
+        'GROUP' => 'text',  // グループ
+        // 以下、未検証
         'LABEL' => 'text',  // ラベル
         'SPACER' => 'string',  // スペース
         'HR' => 'string',  // 罫線
@@ -272,8 +272,12 @@ class CreateAndUpdateAppTables extends Command
                 $table->json($key)->nullable()
                     ->comment($type);
                 break;
-            case 'string':
+            case 'string_short':
                 $table->string($key, 20)->nullable()
+                    ->comment($type);
+                break;
+            case 'string':
+                $table->string($key, 100)->nullable()
                     ->comment($type);
                 break;
             default:
