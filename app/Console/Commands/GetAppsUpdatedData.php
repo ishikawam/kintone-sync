@@ -118,7 +118,7 @@ class GetAppsUpdatedData extends \App\Console\Base
                     }
 
                     $preArray = (array)\DB::table($tableName)
-                        ->where(self::PRIMARY_KEY_NAME, $postArray[self::PRIMARY_KEY_NAME])
+                        ->where('$id', $postArray['$id'])
                         ->select()
                         ->first();
 

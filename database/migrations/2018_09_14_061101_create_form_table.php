@@ -15,7 +15,7 @@ class CreateFormTable extends Migration
     {
         Schema::create('form', function (Blueprint $table) {
             $table->increments('appId');
-            $table->text('properties');
+            $table->json('properties');
         });
     }
 

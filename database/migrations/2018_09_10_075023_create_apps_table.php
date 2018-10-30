@@ -17,7 +17,7 @@ class CreateAppsTable extends Migration
             $table->increments('appId');
             $table->string('code');
             $table->string('name');
-            $table->string('description');
+            $table->text('description');
             $table->string('createdAt', 30);
             $table->string('creator/code');
             $table->string('creator/name');

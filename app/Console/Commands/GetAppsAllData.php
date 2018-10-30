@@ -85,7 +85,7 @@ class GetAppsAllData extends \App\Console\Base
             // ここメモリを結構使う。 "Allowed memory size of〜" のエラーが出たら調整すること
             $rows = \DB::table($tableName)
                 ->get()
-                ->keyBy(self::PRIMARY_KEY_NAME);
+                ->keyBy('$id');
 
             // 全件取得
             $totalCount = 0;
@@ -117,7 +117,7 @@ class GetAppsAllData extends \App\Console\Base
                         }
                     }
 
-                    $preArray = (array)($rows[$postArray[self::PRIMARY_KEY_NAME]] ?? []);
+                    $preArray = (array)($rows[$postArray['$id']] ?? []);
 
                     // kintoneからnullのものは入ってこないので合わせる
                     $preArray = array_filter($preArray, function($c){return !is_null($c);});

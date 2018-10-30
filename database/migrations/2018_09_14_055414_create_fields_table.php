@@ -17,7 +17,7 @@ class CreateFieldsTable extends Migration
             $table->increments('id');
             $table->unsignedInteger('appId');
             $table->unsignedBigInteger('revision');
-            $table->text('properties');
+            $table->json('properties');
 
             $table->boolean('batch')->default(false);  // appテーブルにスキーマ反映済みか
 

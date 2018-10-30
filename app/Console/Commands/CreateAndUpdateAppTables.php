@@ -59,8 +59,12 @@ class CreateAndUpdateAppTables extends Command
         'CHECK_BOX' => 'text', //
         'LINK' => 'text', // リンク
         'STATUS_ASSIGNEE' => 'text', // 作業者
+        'RICH_TEXT' => 'text',  // リッチエディター
         // json
         'CATEGORY' => 'json',
+        'GROUP_SELECT' => 'json',  // グループ選択フィールド
+        'USER_SELECT' => 'json',  // ユーザー選択
+        'SUBTABLE' => 'json',  // テーブル
         // string
         'NUMBER' => 'string',  // 小数点あったりなかったり、空白、もありえるので型としてはstring。
         'CREATED_TIME' => 'string', // 作成日時
@@ -71,6 +75,13 @@ class CreateAndUpdateAppTables extends Command
         // recoreds->get()ではとれないもの？不明なもの
         'REFERENCE_TABLE' => 'text', // 関連レコード一覧
         'GROUP' => 'text', // グループ
+        // 以下、未検証
+        'MULTI_SELECT' => 'json',  // 複数選択
+        'TIME' => 'text',  // 時刻
+        'ORGANIZATION_SELECT' => 'json',  // 組織選択フィールド
+        'LABEL' => 'text',  // ラベル
+        'SPACER' => 'string',  // スペース
+        'HR' => 'string',  // 罫線
     ];
 
     /**

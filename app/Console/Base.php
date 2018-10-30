@@ -14,7 +14,6 @@ class Base extends Command
      */
     const LIMIT_READ = 500;  // kintoneの取得レコード数上限
     const LIMIT_WRITE = 100;  // kintoneの書き込みレコード数上限
-    const PRIMARY_KEY_NAME = 'レコード番号';
 
     /**
      * kintone, DBの差分を比較して変更or新規追加があればDBを更新する
@@ -30,12 +29,12 @@ class Base extends Command
                 // update
                 echo 'U';
                 \Log::info([
-                        'update: ' . $appId . ':' . $postArray[self::PRIMARY_KEY_NAME],
+                        'update: ' . $appId . ':' . $postArray['$id'],
                         $diff,
                     ]);
                 try {
                     \DB::table($tableName)
-                        ->where(self::PRIMARY_KEY_NAME, $postArray[self::PRIMARY_KEY_NAME])
+                        ->where('$id', $postArray['$id'])
                         ->update($postArray);
                 } catch (\Illuminate\Database\QueryException $e) {
                     if ($e->getCode() == '42S22' && ($e->errorInfo[1] ?? null) == 1054) {
@@ -56,7 +55,7 @@ class Base extends Command
                 echo 'I';
 /* insertのログはいらない
    \Log::info([
-   'insert: ' . $appId . ':' . $postArray[self::PRIMARY_KEY_NAME],
+   'insert: ' . $appId . ':' . $postArray['$id'],
    $postArray,
    ]);
 */

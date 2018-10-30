@@ -7,6 +7,8 @@ services:
     image: mysql:5.7
     ports:
       - "13314:3306" # sequel用
+    volumes:
+      - "./storage/mysql/data:/var/lib/mysql:cached"
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: kintone
