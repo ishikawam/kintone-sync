@@ -35,3 +35,11 @@ make get-apps-deleted-data
 # アプリのすべてのレコードを取得保存
 make get-apps-all-data
 ```
+
+ルックアップの再取得を一括実施
+
+> config.sample/kintone.php を参考に config/kintone.php を設置しておく
+
+```
+make refresh-lookup
+```

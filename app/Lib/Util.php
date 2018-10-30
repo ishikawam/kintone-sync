@@ -51,13 +51,18 @@ class Util
     {
         $diff = [];
         foreach ($pre as $key => $val) {
+            if (! isset($post[$key])) {
+                $post[$key] = null;
+            }
             // jsonの場合はarray展開する
-            if (self::isJson($val) && self::isJson($post[$key])) {
+            if (self::isJson($val)) {
                 $val = json_decode($val, true);
+            }
+            if (self::isJson($post[$key])) {
                 $post[$key] = json_decode($post[$key], true);
             }
             if (! is_array($val)) {
-                if ($val != ($post[$key] ?? null)) {
+                if ($val != $post[$key]) {
                     $diff[$key] = $val;
                 }
             } else {
@@ -65,7 +70,7 @@ class Util
                 if (! is_array($post[$key])) {
                     $diff[$key] = $val;
                 } else {
-                    $tmp = self::arrayDiffAssocRecursive($val, ($post[$key] ?? []));
+                    $tmp = self::arrayDiffAssocRecursive($val, $post[$key]);
                     if ($tmp) {
                         $diff[$key] = $tmp;
                     }
