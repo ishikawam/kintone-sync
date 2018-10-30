@@ -90,3 +90,7 @@ run:
 	make get-apps-updated-data
 	make get-apps-deleted-data
 #	make down
+
+destroy:
+	@echo "remove mysql data. Are you sure? " && read ans && [ $$ans == yes ]
+	rm -r storage/mysql/data
