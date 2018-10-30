@@ -21,7 +21,7 @@ make get-info
 # テーブルの作成、カラム追加&削除
 make create-and-update-app-tables
 
-# プリの更新されたのレコードを取得保存
+# アプリの更新されたのレコードを取得保存
 make get-apps-updated-data
 
 # アプリの削除されたのレコードを取得保存

@@ -33,8 +33,8 @@ class Util
     public static function arrayDiff(array $pre, array $post)
     {
         $diff = [
-            'pre' => array_diff($pre, $post),
-            'post' => array_diff($post, $pre),
+            'pre' => self::arrayDiffAssocRecursive($pre, $post),
+            'post' => self::arrayDiffAssocRecursive($post, $pre),
         ];
 
         if ($diff == ['pre' => null, 'post' => null]) {
@@ -42,5 +42,41 @@ class Util
         }
 
         return $diff;
+    }
+
+    /**
+     * array_diff_assoc()を多次元配列対応
+     */
+    private static function arrayDiffAssocRecursive(array $pre, array $post)
+    {
+        $diff = [];
+        foreach ($pre as $key => $val) {
+            // jsonの場合はarray展開する
+            if (self::isJson($val) && self::isJson($post[$key])) {
+                $val = json_decode($val, true);
+                $post[$key] = json_decode($post[$key], true);
+            }
+            if (! is_array($val)) {
+                if ($val != ($post[$key] ?? null)) {
+                    $diff[$key] = $val;
+                }
+            } else {
+                // array
+                if (! is_array($post[$key])) {
+                    $diff[$key] = $val;
+                } else {
+                    $tmp = self::arrayDiffAssocRecursive($val, ($post[$key] ?? []));
+                    if ($tmp) {
+                        $diff[$key] = $tmp;
+                    }
+                }
+            }
+        }
+
+        return $diff;
+    }
+
+    private static function isJson($string) {
+        return is_string($string) && is_array(json_decode($string, true)) && (json_last_error() == JSON_ERROR_NONE) ? true : false;
     }
 }

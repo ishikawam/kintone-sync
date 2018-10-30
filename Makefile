@@ -78,3 +78,12 @@ get-apps-updated-data:
 
 get-apps-deleted-data:
 	docker exec -it $(NAME)_php_1 bash -c "php artisan kintone:get-apps-deleted-data"
+
+run:
+# バックアップを実施
+	make up
+	make get-info
+	make create-and-update-app-tables
+	make get-apps-updated-data
+	make get-apps-deleted-data
+#	make down
