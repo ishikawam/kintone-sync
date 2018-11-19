@@ -1,7 +1,7 @@
 kintone-sync
 ===================
 
-dockerの動作環境が必要です。
+mac: homebrew, git, docker, php7.1
 
 ## setup
 

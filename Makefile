@@ -1,6 +1,6 @@
-# meore
+# kintone-sync
 
-# mac: homebrew, git, docker, php 7.1
+# mac: homebrew, git, docker, php7.1
 
 NAME=kintone-sync
 
