@@ -79,14 +79,19 @@ class GetAppsUpdatedData extends \App\Console\Base
                 throw new \Exception('テーブル ' . $tableName . ' が存在しません。kintone:get-info, kintone:create-and-update-app-tablesを先に実行してください。それでもうまくいかない場合はfieldsテーブルを削除してから再度それぞれ実行してください。');
             }
 
+            // カラム定義をコメントから取得
+            $columnNameUpdatedTime = collect(\DB::select('SHOW FULL columns FROM ' . $tableName))
+                ->firstWhere('Comment', 'UPDATED_TIME')  // 更新日時, Updated_datetime
+                ->Field;
+
             // DBから最終更新日を取得
             $latest = \DB::table($tableName)
-                ->orderByDesc('更新日時')
-                ->first(['更新日時']);
+                ->orderByDesc($columnNameUpdatedTime)
+                ->first([$columnNameUpdatedTime]);
             if ($latest == null) {
                 $whereLatest = '';
             } else {
-                $whereLatest = ' 更新日時 > "' . $latest->更新日時 . '" ';
+                $whereLatest = ' ' . $columnNameUpdatedTime . ' > "' . $latest->$columnNameUpdatedTime . '" ';
             }
 
             // 更新分を取得

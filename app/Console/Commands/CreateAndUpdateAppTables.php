@@ -42,7 +42,7 @@ class CreateAndUpdateAppTables extends Command
      */
     const TYPE_MAP = [
         // bigint_required
-        'RECORD_NUMBER' => 'bigint_required',  // レコード番号 = primary key
+        'RECORD_NUMBER' => 'bigint_required',  // レコード番号, Record_number = primary key
         '__ID__' => 'bigint_required',  // レコードID
         '__REVISION__' => 'bigint_required',  // リビジョン
         // date
@@ -61,17 +61,17 @@ class CreateAndUpdateAppTables extends Command
         'CHECK_BOX' => 'json',  // チェックボックス
         'MULTI_SELECT' => 'json',  // 複数選択
         'FILE' => 'json',  // 添付ファイル
-        'STATUS_ASSIGNEE' => 'json',  // 作業者
+        'STATUS_ASSIGNEE' => 'json',  // 作業者, Assignee
         // json object
-        'CREATOR' => 'json',  // 作成者
-        'MODIFIER' => 'json',  // 更新者
+        'CREATOR' => 'json',  // 作成者, Created_by
+        'MODIFIER' => 'json',  // 更新者, Updated_by
         // string
         'NUMBER' => 'string_short',  // 小数点あったりなかったり、空白、もありえるので型としてはstring。
-        'CREATED_TIME' => 'string_short',  // 作成日時
-        'UPDATED_TIME' => 'string_short',  // 更新日時
+        'CREATED_TIME' => 'string_short',  // 作成日時, Created_datetime
+        'UPDATED_TIME' => 'string_short',  // 更新日時, Updated_datetime
         'DATETIME' => 'string_short',  // 日時
         'TIME' => 'string_short',  // 時刻
-        'STATUS' => 'string_short',  // ステータス
+        'STATUS' => 'string_short',  // ステータス, Status
         'CALC' => 'string',  // 計算
         'DROP_DOWN' => 'string',  // ドロップダウン
         'RADIO_BUTTON' => 'string',  // ラジオボタン
