@@ -2,6 +2,8 @@
 
 # mac: homebrew, git, docker, php7.1
 
+# @todo; docker exec -> dockerk-compose run
+
 NAME=kintone-sync
 
 setup:
@@ -53,7 +55,7 @@ open:
 	open http://localhost:10082
 
 ssh:
-	docker exec -it $(NAME)-php bash
+	docker-compose -p $(NAME) run php bash
 
 clear:
 	docker exec -it $(NAME)-php bash -c "php composer.phar dump-autoload --optimize"
