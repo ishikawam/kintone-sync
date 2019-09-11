@@ -4,6 +4,7 @@ version: "2"
 services:
 
   mysql:
+    container_name: "kintone-sync-mysql"
     image: mysql:5.7
     ports:
       - "13314:3306" # sequel用
@@ -17,6 +18,7 @@ services:
     privileged: true
 
   php:
+    container_name: "kintone-sync-php"
     build: ./docker/php
     volumes:
       - .:/var/www/kintone
