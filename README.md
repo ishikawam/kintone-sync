@@ -1,7 +1,7 @@
 kintone-sync
 ===================
 
-mac: homebrew, git, docker, php7.1
+mac: homebrew, git, docker, php7.3
 
 ## setup
 

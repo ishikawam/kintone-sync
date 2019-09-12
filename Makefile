@@ -1,6 +1,6 @@
 # kintone-sync
 
-# mac: homebrew, git, docker, php7.1
+# mac: homebrew, git, docker, php7.3
 
 # @todo; docker exec -> dockerk-compose run
 
@@ -17,7 +17,8 @@ install:
 	npm install
 	npm run dev
 	make up
-	docker exec -it $(NAME)-php bash -c "php composer.phar install"
+	php composer.phar install
+#	docker exec -it $(NAME)-php bash -c "php composer.phar install"
 	docker exec -it $(NAME)-php bash -c "php artisan clear-compiled"
 	make migrate
 
