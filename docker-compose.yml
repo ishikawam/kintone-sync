@@ -19,7 +19,6 @@ services:
 
   php:
     container_name: "kintone-sync-php"
-    command: "${COMMAND}"
     build: ./docker/php
     volumes:
       - .:/var/www/kintone
