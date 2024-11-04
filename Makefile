@@ -1,87 +1,76 @@
 # kintone-sync
 
-# mac: homebrew, git, docker, php7.3
-
-# @todo; docker exec -> dockerk-compose run
-
-NAME=kintone-sync
+# mac: git, docker
 
 setup:
 	-cp -n .env.sample/.env_local .env
 	-cp -n config.sample/kintone.php config/kintone.php
-	php composer.phar install
-	php artisan key:generate
+	docker compose build
+	docker compose run --rm php php composer.phar install
+	docker compose run --rm php php artisan key:generate
 
 install:
 	git submodule update --init
-	npm install
-	npm run dev
-	make up
-	php composer.phar install
-#	docker exec -it $(NAME)-php bash -c "php composer.phar install"
-	docker exec -it $(NAME)-php bash -c "php artisan clear-compiled"
-	make migrate
+	docker compose run --rm php php composer.phar install
+	docker compose run --rm php php artisan clear-compiled
 
 migrate:
-	docker exec -it $(NAME)-php bash -c "php artisan migrate"
+	docker compose exec php bash -c "php artisan migrate"
 
 migrate-rollback:
-	docker exec -it $(NAME)-php bash -c "php artisan migrate:rollback"
+	docker compose exec php bash -c "php artisan migrate:rollback"
 
 seed:
-	docker exec -it $(NAME)-php bash -c "php artisan migrate:refresh --seed"
+	docker compose exec php bash -c "php artisan migrate:refresh --seed"
 
 up:
-	docker-compose -p $(NAME) up -d --build
+	docker compose up
 
 down:
-	docker-compose -p $(NAME) down
+	docker compose down
 
 logs:
-	docker-compose -p $(NAME) logs -f
+	docker compose logs -f
 
 log:
 	tail -f ./storage/logs/*
 
 start:
-	docker-compose -p $(NAME) start
+	docker compose start
 
 stop:
-	docker-compose -p $(NAME) stop
+	docker compose stop
 
 restart:
-	docker-compose -p $(NAME) restart
-
-open:
-	open http://localhost:10082
+	docker compose restart
 
 ssh:
-	docker-compose -p $(NAME) run php bash
+	docker compose exec php bash
 
 clear:
-	docker exec -it $(NAME)-php bash -c "php composer.phar dump-autoload --optimize"
-	docker exec -it $(NAME)-php bash -c "php artisan clear-compiled ; php artisan config:clear"
+	docker compose run --rm php bash -c "php composer.phar dump-autoload --optimize"
+	docker compose run --rm php bash -c "php artisan clear-compiled ; php artisan config:clear"
 
 #######################################
-# kintone commands
+# kintone-sync commands
 
 get-info:
-	docker exec -it $(NAME)-php bash -c "php artisan kintone:get-info"
+	docker compose exec php php artisan kintone:get-info
 
 create-and-update-app-tables:
-	docker exec -it $(NAME)-php bash -c "php artisan kintone:create-and-update-app-tables"
+	docker compose exec php php artisan kintone:create-and-update-app-tables
 
 get-apps-all-data:
-	docker exec -it $(NAME)-php bash -c "php artisan kintone:get-apps-all-data"
+	docker compose exec php php artisan kintone:get-apps-all-data
 
 get-apps-updated-data:
-	docker exec -it $(NAME)-php bash -c "php artisan kintone:get-apps-updated-data"
+	docker compose exec php php artisan kintone:get-apps-updated-data
 
 get-apps-deleted-data:
-	docker exec -it $(NAME)-php bash -c "php artisan kintone:get-apps-deleted-data"
+	docker compose exec php php artisan kintone:get-apps-deleted-data
 
 refresh-lookup:
-	docker exec -it $(NAME)-php bash -c "php artisan kintone:refresh-lookup"
+	docker compose exec php php artisan kintone:refresh-lookup
 
 run:
 # バックアップを実施
@@ -94,4 +83,5 @@ run:
 
 destroy:
 	@echo "remove mysql data. Are you sure? " && read ans && [ $$ans == yes ]
+	docker compose down --remove-orphans
 	rm -r storage/mysql/data

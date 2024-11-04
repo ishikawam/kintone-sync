@@ -45,6 +45,8 @@ return [
             'subdomain' => env('KINTONE_SUBDOMAIN'),
             'login' => env('KINTONE_LOGIN'),
             'password' => env('KINTONE_PASSWORD'),
+//            'use_api_token' => true,
+//            'token' => env('KINTONE_TOKEN'),
         ],
 
         'ignore_apps' => array_filter(explode(',', env('KINTONE_IGNORE_APPS'))),

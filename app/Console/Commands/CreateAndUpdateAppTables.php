@@ -85,16 +85,6 @@ class CreateAndUpdateAppTables extends Command
     ];
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
@@ -134,7 +124,15 @@ class CreateAndUpdateAppTables extends Command
      */
     private function updateTables()
     {
+        // ignore apps
+        $ignoreApps = config('services.kintone.ignore_apps');
+
         foreach (\App\Model\Apps::all() as $app) {
+            // ignore apps
+            if (in_array($app['appId'], $ignoreApps)) {
+                continue;
+            }
+
             // 未実施のfields最新を検索
             $postFields = \App\Model\Fields::where([
                     'appId' => $app['appId'],

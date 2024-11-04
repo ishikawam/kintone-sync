@@ -30,17 +30,6 @@ class GetAppsUpdatedData extends \App\Console\Base
     // KintoneApi
     private $api;
 
-
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     /**
      * Execute the console command.
      *
@@ -72,7 +61,15 @@ class GetAppsUpdatedData extends \App\Console\Base
             $apps = \App\Model\Apps::all();
         }
 
+        // ignore apps
+        $ignoreApps = config('services.kintone.ignore_apps');
+
         foreach ($apps as $app) {
+            // ignore apps
+            if (in_array($app['appId'], $ignoreApps)) {
+                continue;
+            }
+
             // テーブル名はappId
             $tableName = sprintf('app_%010d', $app->appId);
             if (! \Schema::hasTable($tableName)) {

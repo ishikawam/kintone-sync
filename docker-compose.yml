@@ -1,29 +1,21 @@
-# kintone-sync
-
-version: "2"
 services:
 
   mysql:
-    container_name: "kintone-sync-mysql"
-    image: mysql:5.7
+    image: mysql:8.4
+    command:
+      - --mysql-native-password=ON
     ports:
       - "13314:3306" # sequel用
     volumes:
-      - "./storage/mysql/data:/var/lib/mysql:cached"
+      - ./storage/mysql/data:/var/lib/mysql:cached
+      - ./docker/mysql:/docker-entrypoint-initdb.d:cached
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: kintone
-#    tty: true
-    stdin_open: true
-    privileged: true
 
   php:
-    container_name: "kintone-sync-php"
     build: ./docker/php
     volumes:
       - .:/var/www/kintone
     working_dir: /var/www/kintone
-    mem_limit: 1073741824  # 1GB. local dockerではm, gが使用できない。
-    tty: true
     stdin_open: true
-    privileged: true

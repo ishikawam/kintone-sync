@@ -25,17 +25,6 @@ class RefreshLookup extends \App\Console\Base
     // KintoneApi
     private $api;
 
-
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     /**
      * Execute the console command.
      *
