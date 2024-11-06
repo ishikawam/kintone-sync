@@ -5,7 +5,6 @@ Kintoneのデータを取得しDB(mysql)に同期、保存します。
 
 ## Requirement
 
-* git
 * docker
 
 ## Setup

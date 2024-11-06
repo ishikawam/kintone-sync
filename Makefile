@@ -1,17 +1,15 @@
 # kintone-sync
 
-# mac: git, docker
-
 setup:
 	-cp -n .env.sample/.env_local .env
 	-cp -n config.sample/kintone.php config/kintone.php
+	docker compose pull
 	docker compose build
-	docker compose run --rm php php composer.phar install
+	docker compose run --rm php composer install
 	docker compose run --rm php php artisan key:generate
 
 install:
-	git submodule update --init
-	docker compose run --rm php php composer.phar install
+	docker compose run --rm php composer install
 	docker compose run --rm php php artisan clear-compiled
 
 migrate:
@@ -48,7 +46,7 @@ ssh:
 	docker compose exec php bash
 
 clear:
-	docker compose run --rm php bash -c "php composer.phar dump-autoload --optimize"
+	docker compose run --rm php bash -c "composer dump-autoload --optimize"
 	docker compose run --rm php bash -c "php artisan clear-compiled ; php artisan config:clear"
 
 #######################################
