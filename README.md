@@ -1,9 +1,14 @@
 kintone-sync
 ============
 
-mac: git, docker
+Kintoneのデータを取得しDB(mysql)に同期、保存します。
 
-## setup
+## Requirement
+
+* git
+* docker
+
+## Setup
 
 ```
 make setup
@@ -12,7 +17,7 @@ make install
 
 生成された`.env`にkintoneログイン情報を記入
 
-## running
+## Usage
 
 ```
 # アプリ一覧、スペースの情報、等を取得保存
