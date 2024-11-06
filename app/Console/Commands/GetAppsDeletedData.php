@@ -76,7 +76,7 @@ class GetAppsDeletedData extends Command
             // テーブル名はappId
             $tableName = sprintf('app_%010d', $app->appId);
             if (! \Schema::hasTable($tableName)) {
-                throw new \Exception('テーブル ' . $tableName . ' が存在しません。kintone:get-info, kintone:create-and-update-app-tablesを先に実行してください。それでもうまくいかない場合はfieldsテーブルを削除してから再度それぞれ実行してください。');
+                throw new \RuntimeException('テーブル ' . $tableName . ' が存在しません。kintone:get-info, kintone:create-and-update-app-tablesを先に実行してください。それでもうまくいかない場合はfieldsテーブルを削除してから再度それぞれ実行してください。');
             }
 
             // DBから全件数を取得

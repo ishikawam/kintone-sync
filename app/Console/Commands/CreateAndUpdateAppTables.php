@@ -201,7 +201,7 @@ class CreateAndUpdateAppTables extends Command
             } else {
                 // テーブル新規作成
                 if (\Schema::hasTable($tableName)) {
-                    throw new \Exception('テーブル ' . $tableName . ' が既にあります。テーブルを削除するかfieldsのbatchフラグを調整してください。');
+                    throw new \RuntimeException('テーブル ' . $tableName . ' が既にあります。テーブルを削除するかfieldsのbatchフラグを調整してください。');
                 }
 
                 $this->updatedApps[] = $app['appId'];

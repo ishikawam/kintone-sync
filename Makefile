@@ -1,5 +1,7 @@
 # kintone-sync
 
+all: setup
+
 setup:
 	-cp -n .env.sample/.env_local .env
 	-cp -n config.sample/kintone.php config/kintone.php
