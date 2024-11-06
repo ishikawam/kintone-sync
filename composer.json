@@ -11,17 +11,17 @@
         "php": "^7.4|^8.0",
         "doctrine/dbal": "^2.8",
         "fideloper/proxy": "^4.4",
-        "laravel/framework": "^8",
+        "laravel/framework": "^9",
         "laravel/helpers": "^1.7",
         "laravel/tinker": "^2.5",
         "ochi51/cybozu-http": "^1.4"
     },
     "require-dev": {
         "filp/whoops": "^2.0",
-        "facade/ignition": "^2",
+        "spatie/laravel-ignition": "^1.0",
         "fakerphp/faker": "^1.9.1",
         "mockery/mockery": "^1.0",
-        "nunomaduro/collision": "^5",
+        "nunomaduro/collision": "^6",
         "phpunit/phpunit": "^9"
     },
     "autoload": {
