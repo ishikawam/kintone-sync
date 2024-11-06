@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use App\Lib\KintoneApiWrapper;
 
 /**
  * アプリの削除されたレコードを取得し、DBにGET同期保存する
@@ -41,7 +42,7 @@ class GetAppsDeletedData extends Command
    {
         $this->question('start. ' . __CLASS__);
 
-        $this->api = new \CybozuHttp\Api\KintoneApi(new \CybozuHttp\Client(config('services.kintone.login')));
+        $this->api = new KintoneApiWrapper();
 
         $appId = $this->argument('appId');
 
@@ -83,11 +84,11 @@ class GetAppsDeletedData extends Command
                 ->count();
 
             // 削除されてるか判定したいだけなので1件のみ取得
-            $records = $this->api->records()
+            $records = $this->api->recordsByAppId($app->appId)
                 ->get($app->appId, 'limit 1');
 
             $totalCount = $records['totalCount'];
-            $this->info(sprintf('%s		%s件, DB %s件', $app->name, number_format($totalCount), number_format($count)));
+            $this->info(sprintf('%s	%s		%s件, DB %s件', $app->appId, $app->name, number_format($totalCount), number_format($count)));
 
             // delete
             if ($totalCount < $count) {

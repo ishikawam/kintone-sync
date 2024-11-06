@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Lib\KintoneApiWrapper;
+
 /**
  * アプリのすべてのレコードを取得し、DBにGET同期保存する
  * レコードの更新の操作ログを残す
@@ -41,7 +43,7 @@ class GetAppsAllData extends \App\Console\Base
     {
         $this->question('start. ' . __CLASS__);
 
-        $this->api = new \CybozuHttp\Api\KintoneApi(new \CybozuHttp\Client(config('services.kintone.login')));
+        $this->api = new KintoneApiWrapper();
 
         $appId = $this->argument('appId');
 
@@ -89,7 +91,7 @@ class GetAppsAllData extends \App\Console\Base
             $offset = 0;
             $ids = [];  // あとで削除判定に使用する
             while ($totalCount >= $offset) {
-                $records = $this->api->records()
+                $records = $this->api->recordsByAppId($app->appId)
                     ->get($app->appId, 'limit ' . self::LIMIT_READ . ' offset ' . $offset);
 
                 if ($offset == 0) {

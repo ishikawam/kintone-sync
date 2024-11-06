@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use App\Lib\KintoneApiWrapper;
 
 /**
  * アプリ一覧、スペースの情報、等を取得、DBにGET同期保存する
@@ -38,18 +39,19 @@ class GetInfo extends Command
     {
         $this->question('start. ' . __CLASS__);
 
-        $this->api = new \CybozuHttp\Api\KintoneApi(new \CybozuHttp\Client(config('services.kintone.login')));
+        $this->api = new KintoneApiWrapper();
 
         // アプリ
         $this->info('getApps');
         $apps = $this->getApps();
+        $this->info(sprintf('apps count: %s', count($apps)));
 
         // スペース
         $spaceIds = array_filter(array_unique(array_map(function ($c) {
             return $c['spaceId'];
         }, $apps)));
 
-        $this->info('getSpaces');
+        $this->info(sprintf('getSpaces (count: %s)', count($spaceIds)));
         $this->getSpaces($spaceIds);
 
         // フォーム
@@ -74,17 +76,28 @@ class GetInfo extends Command
      */
     private function getApps()
     {
-        $apps = $this->api->apps()->get()['apps'];
+        try {
+            $apps = $this->api->apps()->get()['apps'];
+        } catch (\RuntimeException $e) {
+            // パスワード認証できない場合
+            $apps = [];
+            foreach (config('services.kintone.login.tokens') as $id => $val) {
+                $apps[] = $this->api->appById($id)->get($id);
+            }
+        }
         // キーをappIdに
         $apps = array_combine(array_column($apps, 'appId'), $apps);
 
         // ignore apps
         $ignoreApps = config('services.kintone.ignore_apps');
+        $includeApps = config('services.kintone.include_apps');
 
-        $spaceIds = [];
         foreach ($apps as $key => $app) {
             // ignore apps
-            if (in_array($app['appId'], $ignoreApps)) {
+            if ($ignoreApps !== ['*'] && in_array($app['appId'], $ignoreApps)) {
+                unset($apps[$key]);
+                continue;
+            } elseif ($ignoreApps === ['*'] && ! in_array($app['appId'], $includeApps)) {
                 unset($apps[$key]);
                 continue;
             }
@@ -182,7 +195,7 @@ class GetInfo extends Command
     private function getForm(array $appIds)
     {
         foreach ($appIds as $appId) {
-            $data = $this->api->app()->getForm($appId);
+            $data = $this->api->appById($appId)->getForm($appId);
             $row = \App\Model\Form::firstOrNew(['appId' => $appId]);
             $preArray = $row->toArray();
             $row->appId = $appId;
@@ -216,7 +229,7 @@ class GetInfo extends Command
     private function getFields(array $appIds)
     {
         foreach ($appIds as $appId) {
-            $data = $this->api->app()->getFields($appId);
+            $data = $this->api->appById($appId)->getFields($appId);
 
             $row = \App\Model\Fields::firstOrCreate([
                     'appId' => $appId,
@@ -240,7 +253,7 @@ class GetInfo extends Command
     private function getLayout(array $appIds)
     {
         foreach ($appIds as $appId) {
-            $data = $this->api->app()->getLayout($appId);
+            $data = $this->api->appById($appId)->getLayout($appId);
             $row = \App\Model\Layout::firstOrCreate([
                     'appId' => $appId,
                     'revision' => $data['revision'],

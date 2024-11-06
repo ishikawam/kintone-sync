@@ -43,13 +43,15 @@ return [
         'login' => [
             'domain' => env('KINTONE_DOMAIN', 'cybozu.com'),
             'subdomain' => env('KINTONE_SUBDOMAIN'),
+            // パスワード認証
             'login' => env('KINTONE_LOGIN'),
             'password' => env('KINTONE_PASSWORD'),
-//            'use_api_token' => true,
-//            'token' => env('KINTONE_TOKEN'),
+            // APIトークン認証
+            'tokens' => json_decode(env('KINTONE_TOKENS', '{}'), true, 512, JSON_THROW_ON_ERROR),
         ],
 
         'ignore_apps' => array_filter(explode(',', env('KINTONE_IGNORE_APPS'))),
+        'include_apps' => array_filter(explode(',', env('KINTONE_INCLUDE_APPS'))),
 
         'custom' => config('kintone'),
     ],

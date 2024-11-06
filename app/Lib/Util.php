@@ -3,7 +3,7 @@
 namespace App\Lib;
 
 /**
- * ユーティリティ
+ * Utility
  */
 class Util
 {

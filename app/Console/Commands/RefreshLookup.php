@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Lib\KintoneApiWrapper;
+
 /**
  * ルックアップの再取得を一括実施
  */
@@ -34,7 +36,7 @@ class RefreshLookup extends \App\Console\Base
    {
         $this->question('start. ' . __CLASS__);
 
-        $this->api = new \CybozuHttp\Api\KintoneApi(new \CybozuHttp\Client(config('services.kintone.login')));
+        $this->api = new KintoneApiWrapper();
 
         $this->refreshLookup();
 
@@ -74,7 +76,7 @@ class RefreshLookup extends \App\Console\Base
             $offset = 0;
             $rows = [];  // 対象全部
             while ($totalCount >= $offset) {
-                $records = $this->api->records()
+                $records = $this->api->recordsByAppId($app->appId)
                     ->get($app->appId, $query . ' limit ' . self::LIMIT_READ . ' offset ' . $offset);
 
                 if ($offset == 0) {
@@ -102,7 +104,7 @@ class RefreshLookup extends \App\Console\Base
             foreach (array_chunk($rows, self::LIMIT_WRITE) as $val) {
                 echo('.');
 
-                $res = $this->api->records()
+                $res = $this->api->recordsByAppId($app->appId)
                     ->put($app->appId, $val);
                 \Log::info(['refresh lookup', $app->appId, $val, $res]);
             }

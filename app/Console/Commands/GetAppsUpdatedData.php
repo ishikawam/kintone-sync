@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Lib\KintoneApiWrapper;
+
 /**
  * アプリの更新されたレコードを取得し、DBにGET同期保存する
  * 更新があった場合はinsert, updateする
@@ -39,7 +41,7 @@ class GetAppsUpdatedData extends \App\Console\Base
     {
         $this->question('start. ' . __CLASS__);
 
-        $this->api = new \CybozuHttp\Api\KintoneApi(new \CybozuHttp\Client(config('services.kintone.login')));
+        $this->api = new KintoneApiWrapper();
 
         $appId = $this->argument('appId');
 
@@ -96,13 +98,13 @@ class GetAppsUpdatedData extends \App\Console\Base
             $offset = 0;
             $lf = false;
             while ($totalCount >= $offset) {
-                $records = $this->api->records()
+                $records = $this->api->recordsByAppId($app->appId)
                     ->get($app->appId, $whereLatest . 'limit ' . self::LIMIT_READ . ' offset ' . $offset);
 
                 if ($offset == 0) {
                     // 初回
                     $totalCount = $records['totalCount'];
-                    $this->info(sprintf('%s		%s件', $app->name, number_format($totalCount)));
+                    $this->info(sprintf('%s	%s		%s件', $app->appId, $app->name, number_format($totalCount)));
                 }
 
                 $offset += self::LIMIT_READ;

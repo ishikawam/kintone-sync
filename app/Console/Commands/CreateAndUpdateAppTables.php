@@ -26,10 +26,6 @@ class CreateAndUpdateAppTables extends Command
      */
     protected $description = 'テーブルの作成、カラム追加&削除';
 
-
-    // KintoneApi
-    private $api;
-
     // GetAppsData強制実行フラグ
     private $updatedApps = [];
 
@@ -92,8 +88,6 @@ class CreateAndUpdateAppTables extends Command
     public function handle()
     {
         $this->question('start. ' . __CLASS__);
-
-        $this->api = new \CybozuHttp\Api\KintoneApi(new \CybozuHttp\Client(config('services.kintone.login')));
 
         $this->updateTables();
 
