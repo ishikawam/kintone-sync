@@ -4,8 +4,8 @@ namespace App\Console\Commands;
 
 use App\Lib\KintoneApiWrapper;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * アプリの削除されたレコードを取得し、DBにGET同期保存する

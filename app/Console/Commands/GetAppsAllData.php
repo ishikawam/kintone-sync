@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Lib\KintoneApiWrapper;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * アプリのすべてのレコードを取得し、DBにGET同期保存する
