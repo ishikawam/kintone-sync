@@ -26,8 +26,12 @@ class CreateAndUpdateAppTables extends Command
      */
     protected $description = 'テーブルの作成、カラム追加&削除';
 
-    // GetAppsData強制実行フラグ
-    private $updatedApps = [];
+    /**
+     * GetAppsData強制実行フラグ
+     *
+     * @var array<int>
+     */
+    private array $updatedApps = [];
 
     // const
 
@@ -117,7 +121,7 @@ class CreateAndUpdateAppTables extends Command
      * フィールド名がキー＝カラム名。なので、フィールド名を変更されたらカラム削除＆カラム追加になる。
      * 上記更新があったら即GetAppAllDataを実施する
      */
-    private function updateTables()
+    private function updateTables(): void
     {
         // ignore apps
         $ignoreApps = config('services.kintone.ignore_apps');
@@ -174,7 +178,7 @@ class CreateAndUpdateAppTables extends Command
                     }
                 }
 
-                \Log::info(['drop column' => $pre, 'add column' => $post]);
+                \Log::info('', ['drop column' => $pre, 'add column' => $post]);
                 $this->warn(json_encode(['drop column' => array_keys($pre), 'add column' => array_keys($post)], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
 
                 // 作り直しがある場合のためにカラム削除とカラム追加は別々に行う
@@ -209,7 +213,7 @@ class CreateAndUpdateAppTables extends Command
 
                 $post = json_decode($postFields->properties, true);
 
-                \Log::info(['create table' => $post]);
+                \Log::info('create table', $post);
                 $this->warn('create table: '.$tableName);
 
                 Schema::create(
@@ -239,7 +243,7 @@ class CreateAndUpdateAppTables extends Command
     /**
      * add schema to table
      */
-    private static function addColumn(\Illuminate\Database\Schema\Blueprint &$table, string $key, string $type)
+    private static function addColumn(\Illuminate\Database\Schema\Blueprint &$table, string $key, string $type): void
     {
         switch (self::TYPE_MAP[$type]) {
             case 'bigint_required':

@@ -31,14 +31,12 @@ class GetAppsUpdatedData extends \App\Console\Base
     protected $description = 'アプリの更新されたのレコードを取得保存';
 
     // KintoneApi
-    private $api;
+    private KintoneApiWrapper $api;
 
     /**
      * Execute the console command.
-     *
-     * @return mixed
      */
-    public function handle()
+    public function handle(): void
     {
         $this->question('start. '.__CLASS__);
 
@@ -54,7 +52,7 @@ class GetAppsUpdatedData extends \App\Console\Base
     /**
      * 更新のあったアプリの更新のあったレコードを取得
      */
-    private function getAppsData(?int $appId = null)
+    private function getAppsData(?int $appId = null): void
     {
         if ($appId) {
             $apps = [\App\Model\Apps::find($appId)];
@@ -142,7 +140,7 @@ class GetAppsUpdatedData extends \App\Console\Base
             }
 
             if ($lf) {
-                $this->info('');
+                $this->info(''); // @todo;
             }
         }
     }

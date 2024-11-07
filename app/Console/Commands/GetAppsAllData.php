@@ -33,7 +33,7 @@ class GetAppsAllData extends \App\Console\Base
     protected $description = 'アプリのすべてのレコードを取得保存';
 
     // KintoneApi
-    private $api;
+    private KintoneApiWrapper $api;
 
     /**
      * Execute the console command.
@@ -56,7 +56,7 @@ class GetAppsAllData extends \App\Console\Base
     /**
      * 更新のあったアプリの全レコードを取得
      */
-    private function getAppsData(?int $appId = null)
+    private function getAppsData(?int $appId = null): void
     {
         if ($appId) {
             $apps = [\App\Model\Apps::find($appId)];
@@ -137,10 +137,10 @@ class GetAppsAllData extends \App\Console\Base
             // 削除
             foreach (DB::table($tableName)->get() as $val) {
                 if (! isset($ids[$val->{'$id'}])) {
-                    \Log::info([
+                    \Log::info(
                         'delete record. APP: '.$app->appId,
-                        $val,
-                    ]);
+                        $val
+                    );
                     echo 'D';
                     DB::table($tableName)
                         ->where('$id', $val->{'$id'})

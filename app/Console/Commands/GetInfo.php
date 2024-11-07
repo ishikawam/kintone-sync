@@ -27,7 +27,7 @@ class GetInfo extends Command
     protected $description = 'アプリ一覧、スペースの情報、等を取得保存';
 
     // KintoneApi
-    private $api;
+    private KintoneApiWrapper $api;
 
     /**
      * Execute the console command.
@@ -71,9 +71,9 @@ class GetInfo extends Command
     /**
      * アプリ情報をDBに保存
      *
-     * @return array
+     * @return array<int, mixed>
      */
-    private function getApps()
+    private function getApps(): array
     {
         try {
             $apps = $this->api->apps()->get()['apps'];
@@ -122,7 +122,7 @@ class GetInfo extends Command
 
             // 差分比較
             if ($diff = \App\Lib\Util::arrayDiff($preArray, $postArray)) {
-                \Log::info(['diff app: '.$row->appId, $diff]);
+                \Log::info('diff app: '.$row->appId, $diff);
                 $this->comment('diff app: '.$row->appId);
             }
         }
@@ -130,7 +130,7 @@ class GetInfo extends Command
         // 次にkintoneで削除されたレコードを検索してDBのレコードを削除
         foreach (\App\Model\Apps::all() as $row) {
             if (! isset($apps[$row->appId])) {
-                \Log::info(['delete app', $row->toArray()]);
+                \Log::info('delete app', $row->toArray());
                 $this->comment('delete app: '.$row->appId);
                 $row->delete();
             }
@@ -144,7 +144,7 @@ class GetInfo extends Command
      *
      * @param  int[]  $spaceIds
      */
-    private function getSpaces(array $spaceIds)
+    private function getSpaces(array $spaceIds): void
     {
         foreach ($spaceIds as $spaceId) {
             $space = $this->api->space()->get($spaceId);
@@ -173,7 +173,7 @@ class GetInfo extends Command
 
             // 差分比較
             if ($diff = \App\Lib\Util::arrayDiff($preArray, $postArray)) {
-                \Log::info(['diff spaces: '.$row->id, $diff]);
+                \Log::info('diff spaces: '.$row->id, $diff);
                 $this->comment('diff spaces: '.$row->id);
             }
         }
@@ -181,7 +181,7 @@ class GetInfo extends Command
         // 次にkintoneで削除されたレコードを検索してDBのレコードを削除
         foreach (\App\Model\Spaces::all() as $row) {
             if (! in_array($row->id, $spaceIds)) {
-                \Log::info(['delete spaces', $row->toArray()]);
+                \Log::info('delete spaces', $row->toArray());
                 $this->comment('delete spaces: '.$row->id);
                 $row->delete();
             }
@@ -193,7 +193,7 @@ class GetInfo extends Command
      *
      * @param  int[]  $appIds
      */
-    private function getForm(array $appIds)
+    private function getForm(array $appIds): void
     {
         foreach ($appIds as $appId) {
             $data = $this->api->appById($appId)->getForm($appId);
@@ -227,7 +227,7 @@ class GetInfo extends Command
      *
      * @param  int[]  $appIds
      */
-    private function getFields(array $appIds)
+    private function getFields(array $appIds): void
     {
         foreach ($appIds as $appId) {
             $data = $this->api->appById($appId)->getFields($appId);
@@ -251,7 +251,7 @@ class GetInfo extends Command
      *
      * @param  int[]  $appIds
      */
-    private function getLayout(array $appIds)
+    private function getLayout(array $appIds): void
     {
         foreach ($appIds as $appId) {
             $data = $this->api->appById($appId)->getLayout($appId);

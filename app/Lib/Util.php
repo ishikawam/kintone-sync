@@ -10,9 +10,10 @@ class Util
     /**
      * DBとAPIで取得した値との比較をするために、booleanを数値にキャスト変換
      *
-     * @return array
+     * @param  array<mixed>  $arr
+     * @return array<mixed>
      */
-    public static function castForDb(array $arr)
+    public static function castForDb(array $arr): array
     {
         foreach ($arr as &$val) {
             if (is_bool($val)) {
@@ -26,9 +27,11 @@ class Util
     /**
      * 差分比較
      *
-     * @return array
+     * @param  array<mixed>  $pre
+     * @param  array<mixed>  $post
+     * @return array<mixed>
      */
-    public static function arrayDiff(array $pre, array $post)
+    public static function arrayDiff(array $pre, array $post): array
     {
         $diff = [
             'pre' => self::arrayDiffAssocRecursive($pre, $post),
@@ -44,8 +47,12 @@ class Util
 
     /**
      * array_diff_assoc()を多次元配列対応
+     *
+     * @param  array<mixed>  $pre
+     * @param  array<mixed>  $post
+     * @return array<mixed>
      */
-    private static function arrayDiffAssocRecursive(array $pre, array $post)
+    private static function arrayDiffAssocRecursive(array $pre, array $post): array
     {
         $diff = [];
         foreach ($pre as $key => $val) {
@@ -79,8 +86,12 @@ class Util
         return $diff;
     }
 
-    private static function isJson($string)
+    /**
+     * @param mixed $string
+     * @return bool
+     */
+    private static function isJson($string): bool
     {
-        return is_string($string) && is_array(json_decode($string, true)) && (json_last_error() == JSON_ERROR_NONE) ? true : false;
+        return is_string($string) && is_array(json_decode($string, true)) && (json_last_error() == JSON_ERROR_NONE);
     }
 }

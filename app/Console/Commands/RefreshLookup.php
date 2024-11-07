@@ -24,14 +24,12 @@ class RefreshLookup extends \App\Console\Base
     protected $description = 'ルックアップの再取得を一括実施';
 
     // KintoneApi
-    private $api;
+    private KintoneApiWrapper $api;
 
     /**
      * Execute the console command.
-     *
-     * @return mixed
      */
-    public function handle()
+    public function handle(): void
     {
         $this->question('start. '.__CLASS__);
 
@@ -45,7 +43,7 @@ class RefreshLookup extends \App\Console\Base
     /**
      * ルックアップの再取得を一括実施
      */
-    private function refreshLookup()
+    private function refreshLookup(): void
     {
         $refreshLookups = config('services.kintone.custom.refresh_lookup');
 
@@ -62,7 +60,7 @@ class RefreshLookup extends \App\Console\Base
             $field = json_decode($fields->properties);
             $codes = [];
             foreach ($field as $row) {
-                if (isset($row->lookup)) {
+                if (isset($row->lookup) && isset($row->code)) {
                     // ルックアップのコードをすべて取得 現状コードを指定しての一括更新はできない
                     $codes[] = $row->code;
                 }
@@ -105,7 +103,7 @@ class RefreshLookup extends \App\Console\Base
 
                 $res = $this->api->recordsByAppId($app->appId)
                     ->put($app->appId, $val);
-                \Log::info(['refresh lookup', $app->appId, $val, $res]);
+                \Log::info('refresh lookup', [$app->appId, $val, $res]);
             }
 
             $this->info('');

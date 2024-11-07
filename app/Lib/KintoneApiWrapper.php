@@ -15,13 +15,19 @@ use CybozuHttp\Client;
  */
 class KintoneApiWrapper extends KintoneApi
 {
-    private $apps;
+    private Apps $apps;
 
-    private $app;
+    /**
+     * @var array<int, App>
+     */
+    private array $app;
 
-    private $space;
+    private Space $space;
 
-    private $records;
+    /**
+     * @var array<int, Records>
+     */
+    private array $records;
 
     public function __construct()
     {

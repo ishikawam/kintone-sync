@@ -19,17 +19,23 @@ class Base extends Command
 
     /**
      * kintone, DBの差分を比較して変更or新規追加があればDBを更新する
+     *
+     * @param  string  $tableName
+     * @param  int  $appId
+     * @param  array<mixed>  $preArray
+     * @param  array<mixed>  $postArray
+     * @return bool
      */
-    public function insertAndUpdate(string $tableName, int $appId, array $preArray, array $postArray)
+    public function insertAndUpdate(string $tableName, int $appId, array $preArray, array $postArray): bool
     {
         if ($diff = \App\Lib\Util::arrayDiff($preArray, $postArray)) {
             if ($preArray) {
                 // update
                 echo 'U';
-                \Log::info([
+                \Log::info(
                     'update: '.$appId.':'.$postArray['$id'],
                     $diff,
-                ]);
+                );
                 try {
                     DB::table($tableName)
                         ->where('$id', $postArray['$id'])
@@ -37,14 +43,14 @@ class Base extends Command
                 } catch (\Illuminate\Database\QueryException $e) {
                     if ($e->getCode() == '42S22' && ($e->errorInfo[1] ?? null) == 1054) {
                         // Column not found で再生成
-                        $this->info('');
+                        $this->info('update: error.');
                         $this->error($e->errorInfo[2]);
                         $this->warn('カラムに変更があったかもしれません。`make get-info & make create-and-update-app-tables` を実行します');
                         $this->call('kintone:get-info');
                         $this->call('kintone:create-and-update-app-tables');
                         $this->info('DONE.');
 
-                        return;
+                        return true;
                     } else {
                         throw $e;
                     }
@@ -53,10 +59,10 @@ class Base extends Command
                 // insert
                 echo 'I';
                 /* insertのログはいらない
-                   \Log::info([
+                   \Log::info(
                    'insert: ' . $appId . ':' . $postArray['$id'],
                    $postArray,
-                   ]);
+                   );
                 */
                 try {
                     DB::table($tableName)
@@ -64,14 +70,14 @@ class Base extends Command
                 } catch (\Illuminate\Database\QueryException $e) {
                     if ($e->getCode() == '42S22' && ($e->errorInfo[1] ?? null) == 1054) {
                         // Column not found で再生成
-                        $this->info('');
+                        $this->info('insert: error');
                         $this->error($e->errorInfo[2]);
                         $this->warn('カラムに変更があったかもしれません。`make get-info & make create-and-update-app-tables` を実行します');
                         $this->call('kintone:get-info');
                         $this->call('kintone:create-and-update-app-tables');
                         $this->info('DONE.');
 
-                        return;
+                        return true;
                     } else {
                         throw $e;
                     }

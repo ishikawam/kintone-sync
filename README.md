@@ -3,9 +3,17 @@ kintone-sync
 
 Kintoneのデータを取得しDB(mysql)に同期、保存します。
 
+同期時に差分だけを取り込むことでAPIリクエスト回数を節約します。<br>
+mysqlへは構造化されて保存し、例えばテーブルはJSONカラムで記録されるので集計等扱いやすくなります。
+
 ## Requirement
 
 * docker
+
+dockerを使わない場合は
+
+* php 8.2
+* mysql 8.4
 
 ## Setup
 
@@ -14,7 +22,20 @@ make setup
 make install
 ```
 
-生成された`.env`にkintoneログイン情報を記入
+生成された`.env`にkintoneログイン情報を記入します。
+
+```
+# kintone login
+KINTONE_SUBDOMAIN={Kintoneのサブドメイン}
+#KINTONE_LOGIN={パスワード認証で利用する場合のユーザー名}
+#KINTONE_PASSWORD={パスワード認証で利用する場合のパスワード}
+
+KINTONE_TOKENS={APIトークンを使用する場合}
+
+# kintone settings
+KINTONE_IGNORE_APPS={同期除外アプリ}
+KINTONE_INCLUDE_APPS={特定のアプリだけを同期したい場合}
+```
 
 ## Usage
 
@@ -25,18 +46,17 @@ make get-info
 # テーブルの作成、カラム追加&削除
 make create-and-update-app-tables
 
-# アプリの更新されたのレコードを取得保存
+# アプリの追加、更新されたレコードを取得同期
 make get-apps-updated-data
 
-# アプリの削除されたのレコードを取得保存
+# アプリで削除されたレコードを取得同期
 make get-apps-deleted-data
-
 ```
 
-全件取得時
+全件取得、同期しなおす場合
 
 ```
-# アプリのすべてのレコードを取得保存
+# アプリのすべてのレコードを取得同期
 make get-apps-all-data
 ```
 

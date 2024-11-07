@@ -32,14 +32,12 @@ class GetAppsDeletedData extends Command
     protected $description = 'アプリの削除されたのレコードを取得保存';
 
     // KintoneApi
-    private $api;
+    private KintoneApiWrapper $api;
 
     /**
      * Execute the console command.
-     *
-     * @return mixed
      */
-    public function handle()
+    public function handle(): void
     {
         $this->question('start. '.__CLASS__);
 
@@ -55,7 +53,7 @@ class GetAppsDeletedData extends Command
     /**
      * 削除のあったアプリの更新のあったレコードを取得
      */
-    private function getAppsData(?int $appId = null)
+    private function getAppsData(?int $appId = null): void
     {
         if ($appId) {
             $apps = [\App\Model\Apps::find($appId)];
