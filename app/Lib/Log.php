@@ -27,6 +27,6 @@ class Log extends \Illuminate\Support\Facades\Log
         if (is_array($message)) {
             $message = json_encode($message, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         }
-        parent::warn($message, $context);
+        parent::warning($message, $context);
     }
 }

@@ -48,7 +48,7 @@ class GetAppsAllData extends \App\Console\Base
 
         $appId = $this->argument('appId');
 
-        $this->getAppsData($appId);
+        $this->getAppsData($appId ? (int) $appId : null);
 
         $this->question('end. '.__CLASS__);
     }

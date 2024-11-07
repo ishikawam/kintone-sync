@@ -206,7 +206,7 @@ class GetInfo extends Command
 
             // 差分比較
             if ($diff = \App\Lib\Util::arrayDiff($preArray, $postArray)) {
-                \Log::info(['diff form: '.$row->id, $diff]);
+                \Log::info('diff form: '.$row->appId, $diff);
                 $this->comment('diff form: '.$row->appId);
             }
         }
@@ -214,8 +214,8 @@ class GetInfo extends Command
         // 次にkintoneで削除されたレコードを検索してDBのレコードを削除
         foreach (\App\Model\Form::all() as $row) {
             if (! in_array($row->appId, $appIds)) {
-                \Log::info(['delete form', $row->toArray()]);
-                $this->comment('delete form: '.$row->id);
+                \Log::info('delete form', $row->toArray());
+                $this->comment('delete form: '.$row->appId);
                 $row->delete();
             }
         }

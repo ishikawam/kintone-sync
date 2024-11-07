@@ -51,6 +51,9 @@ clear:
 fix:
 	docker compose run --rm php ./vendor/bin/pint
 
+analyse:
+	docker compose run --rm php ./vendor/bin/phpstan analyse
+
 #######################################
 # kintone-sync commands
 

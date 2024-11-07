@@ -271,8 +271,7 @@ class CreateAndUpdateAppTables extends Command
                     ->comment($type);
                 break;
             default:
-                dump(['error', $val]);
-                exit;
+                throw new \RuntimeException('error. '.$type);
         }
     }
 }
