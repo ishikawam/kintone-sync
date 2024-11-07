@@ -2,12 +2,12 @@
 
 namespace App\Lib;
 
-use CybozuHttp\Api\KintoneApi;
-use CybozuHttp\Client;
-use CybozuHttp\Api\Kintone\Apps;
 use CybozuHttp\Api\Kintone\App;
+use CybozuHttp\Api\Kintone\Apps;
 use CybozuHttp\Api\Kintone\Records;
 use CybozuHttp\Api\Kintone\Space;
+use CybozuHttp\Api\KintoneApi;
+use CybozuHttp\Client;
 
 /**
  * KintoneApiWrapper
@@ -28,9 +28,6 @@ class KintoneApiWrapper extends KintoneApi
         // parent::__construct($client);  // ここでは呼ばない
     }
 
-    /**
-     * @return Apps
-     */
     public function apps(): Apps
     {
         if (isset($this->apps)) {
@@ -38,7 +35,7 @@ class KintoneApiWrapper extends KintoneApi
         }
 
         $config = config('services.kintone.login');
-        if (!($config['login'] && $config['password'])) {
+        if (! ($config['login'] && $config['password'])) {
             throw new \RuntimeException('アプリ一覧を操作するにはパスワード認証が必要です');
         }
         $client = new Client($config);
@@ -47,9 +44,6 @@ class KintoneApiWrapper extends KintoneApi
         return $this->apps;
     }
 
-    /**
-     * @return Space
-     */
     public function space(): Space
     {
         if (isset($this->space)) {
@@ -57,7 +51,7 @@ class KintoneApiWrapper extends KintoneApi
         }
 
         $config = config('services.kintone.login');
-        if (!($config['login'] && $config['password'])) {
+        if (! ($config['login'] && $config['password'])) {
             throw new \RuntimeException('スペースを操作するにはパスワード認証が必要です');
         }
         $client = new Client($config);
@@ -66,10 +60,6 @@ class KintoneApiWrapper extends KintoneApi
         return $this->space;
     }
 
-    /**
-     * @param  int  $id
-     * @return App
-     */
     public function appById(int $id): App
     {
         if (isset($this->app[$id])) {
@@ -86,13 +76,10 @@ class KintoneApiWrapper extends KintoneApi
 
         $client = new Client($config);
         $this->app[$id] = new App($client);
+
         return $this->app[$id];
     }
 
-    /**
-     * @param  int  $id
-     * @return Records
-     */
     public function recordsByAppId(int $id): Records
     {
         if (isset($this->records[$id])) {
@@ -109,6 +96,7 @@ class KintoneApiWrapper extends KintoneApi
 
         $client = new Client($config);
         $this->records[$id] = new Records($client);
+
         return $this->records[$id];
     }
 }

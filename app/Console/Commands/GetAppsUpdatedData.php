@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Lib\KintoneApiWrapper;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 /**
  * アプリの更新されたレコードを取得し、DBにGET同期保存する
@@ -28,7 +30,6 @@ class GetAppsUpdatedData extends \App\Console\Base
      */
     protected $description = 'アプリの更新されたのレコードを取得保存';
 
-
     // KintoneApi
     private $api;
 
@@ -39,23 +40,21 @@ class GetAppsUpdatedData extends \App\Console\Base
      */
     public function handle()
     {
-        $this->question('start. ' . __CLASS__);
+        $this->question('start. '.__CLASS__);
 
-        $this->api = new KintoneApiWrapper();
+        $this->api = new KintoneApiWrapper;
 
         $appId = $this->argument('appId');
 
         $this->getAppsData($appId);
 
-        $this->question('end. ' . __CLASS__);
+        $this->question('end. '.__CLASS__);
     }
 
     /**
      * 更新のあったアプリの更新のあったレコードを取得
-     *
-     * @param int|null $appId
      */
-    private function getAppsData(int $appId = null)
+    private function getAppsData(?int $appId = null)
     {
         if ($appId) {
             $apps = [\App\Model\Apps::find($appId)];
@@ -74,23 +73,23 @@ class GetAppsUpdatedData extends \App\Console\Base
 
             // テーブル名はappId
             $tableName = sprintf('app_%010d', $app->appId);
-            if (! \Schema::hasTable($tableName)) {
-                throw new \RuntimeException('テーブル ' . $tableName . ' が存在しません。kintone:get-info, kintone:create-and-update-app-tablesを先に実行してください。それでもうまくいかない場合はfieldsテーブルを削除してから再度それぞれ実行してください。');
+            if (! Schema::hasTable($tableName)) {
+                throw new \RuntimeException('テーブル '.$tableName.' が存在しません。kintone:get-info, kintone:create-and-update-app-tablesを先に実行してください。それでもうまくいかない場合はfieldsテーブルを削除してから再度それぞれ実行してください。');
             }
 
             // カラム定義をコメントから取得
-            $columnNameUpdatedTime = collect(\DB::select('SHOW FULL columns FROM ' . $tableName))
+            $columnNameUpdatedTime = collect(DB::select('SHOW FULL columns FROM '.$tableName))
                 ->firstWhere('Comment', 'UPDATED_TIME')  // 更新日時, Updated_datetime
                 ->Field;
 
             // DBから最終更新日を取得
-            $latest = \DB::table($tableName)
+            $latest = DB::table($tableName)
                 ->orderByDesc($columnNameUpdatedTime)
                 ->first([$columnNameUpdatedTime]);
             if ($latest == null) {
                 $whereLatest = '';
             } else {
-                $whereLatest = ' ' . $columnNameUpdatedTime . ' > "' . $latest->$columnNameUpdatedTime . '" ';
+                $whereLatest = ' '.$columnNameUpdatedTime.' > "'.$latest->$columnNameUpdatedTime.'" ';
             }
 
             // 更新分を取得
@@ -99,7 +98,7 @@ class GetAppsUpdatedData extends \App\Console\Base
             $lf = false;
             while ($totalCount >= $offset) {
                 $records = $this->api->recordsByAppId($app->appId)
-                    ->get($app->appId, $whereLatest . 'limit ' . self::LIMIT_READ . ' offset ' . $offset);
+                    ->get($app->appId, $whereLatest.'limit '.self::LIMIT_READ.' offset '.$offset);
 
                 if ($offset == 0) {
                     // 初回
@@ -121,15 +120,19 @@ class GetAppsUpdatedData extends \App\Console\Base
                         }
                     }
 
-                    $preArray = (array)\DB::table($tableName)
+                    $preArray = (array) DB::table($tableName)
                         ->where('$id', $postArray['$id'])
                         ->select()
                         ->first();
 
                     // kintoneからnullのものは入ってこないので合わせる
-                    $preArray = array_filter($preArray, function($c){return !is_null($c);});
+                    $preArray = array_filter($preArray, function ($c) {
+                        return ! is_null($c);
+                    });
                     // 逆もしかり…
-                    $postArray = array_filter(\App\Lib\Util::castForDb($postArray), function($c){return !is_null($c);});
+                    $postArray = array_filter(\App\Lib\Util::castForDb($postArray), function ($c) {
+                        return ! is_null($c);
+                    });
 
                     // 差分をみてinsert and update
                     if ($this->insertAndUpdate($tableName, $app->appId, $preArray, $postArray)) {

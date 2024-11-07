@@ -3,6 +3,7 @@
 namespace App\Console;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 /**
  * 共通
@@ -13,14 +14,11 @@ class Base extends Command
      * const
      */
     const LIMIT_READ = 500;  // kintoneの取得レコード数上限
+
     const LIMIT_WRITE = 100;  // kintoneの書き込みレコード数上限
 
     /**
      * kintone, DBの差分を比較して変更or新規追加があればDBを更新する
-     * @param string $tableName
-     * @param int $appId
-     * @param array $preArray
-     * @param array $postArray
      */
     public function insertAndUpdate(string $tableName, int $appId, array $preArray, array $postArray)
     {
@@ -29,11 +27,11 @@ class Base extends Command
                 // update
                 echo 'U';
                 \Log::info([
-                        'update: ' . $appId . ':' . $postArray['$id'],
-                        $diff,
-                    ]);
+                    'update: '.$appId.':'.$postArray['$id'],
+                    $diff,
+                ]);
                 try {
-                    \DB::table($tableName)
+                    DB::table($tableName)
                         ->where('$id', $postArray['$id'])
                         ->update($postArray);
                 } catch (\Illuminate\Database\QueryException $e) {
@@ -45,6 +43,7 @@ class Base extends Command
                         $this->call('kintone:get-info');
                         $this->call('kintone:create-and-update-app-tables');
                         $this->info('DONE.');
+
                         return;
                     } else {
                         throw $e;
@@ -53,14 +52,14 @@ class Base extends Command
             } else {
                 // insert
                 echo 'I';
-/* insertのログはいらない
-   \Log::info([
-   'insert: ' . $appId . ':' . $postArray['$id'],
-   $postArray,
-   ]);
-*/
+                /* insertのログはいらない
+                   \Log::info([
+                   'insert: ' . $appId . ':' . $postArray['$id'],
+                   $postArray,
+                   ]);
+                */
                 try {
-                    \DB::table($tableName)
+                    DB::table($tableName)
                         ->insert($postArray);
                 } catch (\Illuminate\Database\QueryException $e) {
                     if ($e->getCode() == '42S22' && ($e->errorInfo[1] ?? null) == 1054) {
@@ -71,12 +70,14 @@ class Base extends Command
                         $this->call('kintone:get-info');
                         $this->call('kintone:create-and-update-app-tables');
                         $this->info('DONE.');
+
                         return;
                     } else {
                         throw $e;
                     }
                 }
             }
+
             return true;
         }
 

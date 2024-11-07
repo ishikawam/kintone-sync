@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Lib\KintoneApiWrapper;
+use Illuminate\Console\Command;
 
 /**
  * アプリ一覧、スペースの情報、等を取得、DBにGET同期保存する
@@ -26,7 +26,6 @@ class GetInfo extends Command
      */
     protected $description = 'アプリ一覧、スペースの情報、等を取得保存';
 
-
     // KintoneApi
     private $api;
 
@@ -37,9 +36,9 @@ class GetInfo extends Command
      */
     public function handle()
     {
-        $this->question('start. ' . __CLASS__);
+        $this->question('start. '.__CLASS__);
 
-        $this->api = new KintoneApiWrapper();
+        $this->api = new KintoneApiWrapper;
 
         // アプリ
         $this->info('getApps');
@@ -66,7 +65,7 @@ class GetInfo extends Command
         $this->info('getLayout');
         $this->getLayout(array_keys($apps));
 
-        $this->question('end. ' . __CLASS__);
+        $this->question('end. '.__CLASS__);
     }
 
     /**
@@ -96,9 +95,11 @@ class GetInfo extends Command
             // ignore apps
             if ($ignoreApps !== ['*'] && in_array($app['appId'], $ignoreApps)) {
                 unset($apps[$key]);
+
                 continue;
             } elseif ($ignoreApps === ['*'] && ! in_array($app['appId'], $includeApps)) {
                 unset($apps[$key]);
+
                 continue;
             }
 
@@ -121,8 +122,8 @@ class GetInfo extends Command
 
             // 差分比較
             if ($diff = \App\Lib\Util::arrayDiff($preArray, $postArray)) {
-                \Log::info(['diff app: ' . $row->appId, $diff]);
-                $this->comment('diff app: ' . $row->appId);
+                \Log::info(['diff app: '.$row->appId, $diff]);
+                $this->comment('diff app: '.$row->appId);
             }
         }
 
@@ -130,7 +131,7 @@ class GetInfo extends Command
         foreach (\App\Model\Apps::all() as $row) {
             if (! isset($apps[$row->appId])) {
                 \Log::info(['delete app', $row->toArray()]);
-                $this->comment('delete app: ' . $row->appId);
+                $this->comment('delete app: '.$row->appId);
                 $row->delete();
             }
         }
@@ -141,7 +142,7 @@ class GetInfo extends Command
     /**
      * スペース情報をDBに保存
      *
-     * @param int[] $spaceIds
+     * @param  int[]  $spaceIds
      */
     private function getSpaces(array $spaceIds)
     {
@@ -172,8 +173,8 @@ class GetInfo extends Command
 
             // 差分比較
             if ($diff = \App\Lib\Util::arrayDiff($preArray, $postArray)) {
-                \Log::info(['diff spaces: ' . $row->id, $diff]);
-                $this->comment('diff spaces: ' . $row->id);
+                \Log::info(['diff spaces: '.$row->id, $diff]);
+                $this->comment('diff spaces: '.$row->id);
             }
         }
 
@@ -181,7 +182,7 @@ class GetInfo extends Command
         foreach (\App\Model\Spaces::all() as $row) {
             if (! in_array($row->id, $spaceIds)) {
                 \Log::info(['delete spaces', $row->toArray()]);
-                $this->comment('delete spaces: ' . $row->id);
+                $this->comment('delete spaces: '.$row->id);
                 $row->delete();
             }
         }
@@ -190,7 +191,7 @@ class GetInfo extends Command
     /**
      * フォーム情報をDBに保存
      *
-     * @param int[] $appIds
+     * @param  int[]  $appIds
      */
     private function getForm(array $appIds)
     {
@@ -205,8 +206,8 @@ class GetInfo extends Command
 
             // 差分比較
             if ($diff = \App\Lib\Util::arrayDiff($preArray, $postArray)) {
-                \Log::info(['diff form: ' . $row->id, $diff]);
-                $this->comment('diff form: ' . $row->appId);
+                \Log::info(['diff form: '.$row->id, $diff]);
+                $this->comment('diff form: '.$row->appId);
             }
         }
 
@@ -214,7 +215,7 @@ class GetInfo extends Command
         foreach (\App\Model\Form::all() as $row) {
             if (! in_array($row->appId, $appIds)) {
                 \Log::info(['delete form', $row->toArray()]);
-                $this->comment('delete form: ' . $row->id);
+                $this->comment('delete form: '.$row->id);
                 $row->delete();
             }
         }
@@ -224,7 +225,7 @@ class GetInfo extends Command
      * フィールド情報をDBに保存
      * revisionごと保存。batchはmigration進捗フラグとして使用
      *
-     * @param int[] $appIds
+     * @param  int[]  $appIds
      */
     private function getFields(array $appIds)
     {
@@ -232,14 +233,14 @@ class GetInfo extends Command
             $data = $this->api->appById($appId)->getFields($appId);
 
             $row = \App\Model\Fields::firstOrCreate([
-                    'appId' => $appId,
-                    'revision' => $data['revision'],
-                ], [
-                    'properties' => json_encode($data['properties'], JSON_UNESCAPED_UNICODE),
-                ]);
+                'appId' => $appId,
+                'revision' => $data['revision'],
+            ], [
+                'properties' => json_encode($data['properties'], JSON_UNESCAPED_UNICODE),
+            ]);
 
             if ($row->batch === null) {
-                $this->comment('new fields: ' . $appId . ', ' . $data['revision']);
+                $this->comment('new fields: '.$appId.', '.$data['revision']);
             }
         }
     }
@@ -248,18 +249,18 @@ class GetInfo extends Command
      * レイアウト情報をDBに保存
      * revisionごと保存。batchは現在未使用
      *
-     * @param int[] $appIds
+     * @param  int[]  $appIds
      */
     private function getLayout(array $appIds)
     {
         foreach ($appIds as $appId) {
             $data = $this->api->appById($appId)->getLayout($appId);
             $row = \App\Model\Layout::firstOrCreate([
-                    'appId' => $appId,
-                    'revision' => $data['revision'],
-                ], [
-                    'layout' => json_encode($data['layout'], JSON_UNESCAPED_UNICODE),
-                ]);
+                'appId' => $appId,
+                'revision' => $data['revision'],
+            ], [
+                'layout' => json_encode($data['layout'], JSON_UNESCAPED_UNICODE),
+            ]);
         }
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Lib\KintoneApiWrapper;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 /**
  * アプリのすべてのレコードを取得し、DBにGET同期保存する
@@ -30,7 +32,6 @@ class GetAppsAllData extends \App\Console\Base
      */
     protected $description = 'アプリのすべてのレコードを取得保存';
 
-
     // KintoneApi
     private $api;
 
@@ -41,23 +42,21 @@ class GetAppsAllData extends \App\Console\Base
      */
     public function handle()
     {
-        $this->question('start. ' . __CLASS__);
+        $this->question('start. '.__CLASS__);
 
-        $this->api = new KintoneApiWrapper();
+        $this->api = new KintoneApiWrapper;
 
         $appId = $this->argument('appId');
 
         $this->getAppsData($appId);
 
-        $this->question('end. ' . __CLASS__);
+        $this->question('end. '.__CLASS__);
     }
 
     /**
      * 更新のあったアプリの全レコードを取得
-     *
-     * @param int|null $appId
      */
-    private function getAppsData(int $appId = null)
+    private function getAppsData(?int $appId = null)
     {
         if ($appId) {
             $apps = [\App\Model\Apps::find($appId)];
@@ -76,13 +75,13 @@ class GetAppsAllData extends \App\Console\Base
 
             // テーブル名はappId
             $tableName = sprintf('app_%010d', $app->appId);
-            if (! \Schema::hasTable($tableName)) {
-                throw new \RuntimeException('テーブル ' . $tableName . ' が存在しません。kintone:get-info, kintone:create-and-update-app-tablesを先に実行してください。それでもうまくいかない場合はfieldsテーブルを削除してから再度それぞれ実行してください。');
+            if (! Schema::hasTable($tableName)) {
+                throw new \RuntimeException('テーブル '.$tableName.' が存在しません。kintone:get-info, kintone:create-and-update-app-tablesを先に実行してください。それでもうまくいかない場合はfieldsテーブルを削除してから再度それぞれ実行してください。');
             }
 
             // DB
             // ここメモリを結構使う。 "Allowed memory size of〜" のエラーが出たら調整すること
-            $rows = \DB::table($tableName)
+            $rows = DB::table($tableName)
                 ->get()
                 ->keyBy('$id');
 
@@ -92,7 +91,7 @@ class GetAppsAllData extends \App\Console\Base
             $ids = [];  // あとで削除判定に使用する
             while ($totalCount >= $offset) {
                 $records = $this->api->recordsByAppId($app->appId)
-                    ->get($app->appId, 'limit ' . self::LIMIT_READ . ' offset ' . $offset);
+                    ->get($app->appId, 'limit '.self::LIMIT_READ.' offset '.$offset);
 
                 if ($offset == 0) {
                     // 初回
@@ -102,7 +101,7 @@ class GetAppsAllData extends \App\Console\Base
 
                 $offset += self::LIMIT_READ;
 
-                echo('.');
+                echo '.';
 
                 // insert update
                 foreach ($records['records'] as $record) {
@@ -116,12 +115,16 @@ class GetAppsAllData extends \App\Console\Base
                         }
                     }
 
-                    $preArray = (array)($rows[$postArray['$id']] ?? []);
+                    $preArray = (array) ($rows[$postArray['$id']] ?? []);
 
                     // kintoneからnullのものは入ってこないので合わせる
-                    $preArray = array_filter($preArray, function($c){return !is_null($c);});
+                    $preArray = array_filter($preArray, function ($c) {
+                        return ! is_null($c);
+                    });
                     // 逆もしかり…
-                    $postArray = array_filter(\App\Lib\Util::castForDb($postArray), function($c){return !is_null($c);});
+                    $postArray = array_filter(\App\Lib\Util::castForDb($postArray), function ($c) {
+                        return ! is_null($c);
+                    });
 
                     // 差分をみてinsert and update
                     $this->insertAndUpdate($tableName, $app->appId, $preArray, $postArray);
@@ -132,14 +135,14 @@ class GetAppsAllData extends \App\Console\Base
             }
 
             // 削除
-            foreach (\DB::table($tableName)->get() as $val) {
+            foreach (DB::table($tableName)->get() as $val) {
                 if (! isset($ids[$val->{'$id'}])) {
                     \Log::info([
-                            'delete record. APP: ' . $app->appId,
-                            $val,
-                        ]);
-                    echo('D');
-                    \DB::table($tableName)
+                        'delete record. APP: '.$app->appId,
+                        $val,
+                    ]);
+                    echo 'D';
+                    DB::table($tableName)
                         ->where('$id', $val->{'$id'})
                         ->delete();
                 }

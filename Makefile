@@ -29,9 +29,6 @@ up:
 down:
 	docker compose down --remove-orphans
 
-logs:
-	docker compose logs -f
-
 log:
 	tail -f ./storage/logs/*
 
@@ -50,6 +47,9 @@ ssh:
 clear:
 	docker compose run --rm php bash -c "composer dump-autoload --optimize"
 	docker compose run --rm php bash -c "php artisan clear-compiled ; php artisan config:clear"
+
+fix:
+	docker compose run --rm php ./vendor/bin/pint
 
 #######################################
 # kintone-sync commands

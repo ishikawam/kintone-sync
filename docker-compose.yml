@@ -12,6 +12,11 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: kintone
+    healthcheck:
+      test: MYSQL_PWD=password mysqladmin ping -h localhost -uroot
+      interval: "1s"
+      timeout: "1s"
+      retries: 10
 
   php:
     build: ./docker/php

@@ -23,7 +23,6 @@ class RefreshLookup extends \App\Console\Base
      */
     protected $description = 'ルックアップの再取得を一括実施';
 
-
     // KintoneApi
     private $api;
 
@@ -33,14 +32,14 @@ class RefreshLookup extends \App\Console\Base
      * @return mixed
      */
     public function handle()
-   {
-        $this->question('start. ' . __CLASS__);
+    {
+        $this->question('start. '.__CLASS__);
 
-        $this->api = new KintoneApiWrapper();
+        $this->api = new KintoneApiWrapper;
 
         $this->refreshLookup();
 
-        $this->question('end. ' . __CLASS__);
+        $this->question('end. '.__CLASS__);
     }
 
     /**
@@ -69,7 +68,7 @@ class RefreshLookup extends \App\Console\Base
                 }
             }
 
-            $this->line('ルックアップコード: ' . implode(', ', $codes));
+            $this->line('ルックアップコード: '.implode(', ', $codes));
 
             // apiから取得
             $totalCount = 0;
@@ -77,7 +76,7 @@ class RefreshLookup extends \App\Console\Base
             $rows = [];  // 対象全部
             while ($totalCount >= $offset) {
                 $records = $this->api->recordsByAppId($app->appId)
-                    ->get($app->appId, $query . ' limit ' . self::LIMIT_READ . ' offset ' . $offset);
+                    ->get($app->appId, $query.' limit '.self::LIMIT_READ.' offset '.$offset);
 
                 if ($offset == 0) {
                     // 初回
@@ -102,7 +101,7 @@ class RefreshLookup extends \App\Console\Base
 
             // limitに分けて実行
             foreach (array_chunk($rows, self::LIMIT_WRITE) as $val) {
-                echo('.');
+                echo '.';
 
                 $res = $this->api->recordsByAppId($app->appId)
                     ->put($app->appId, $val);

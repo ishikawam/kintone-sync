@@ -10,24 +10,22 @@ class Util
     /**
      * DBとAPIで取得した値との比較をするために、booleanを数値にキャスト変換
      *
-     * @param array $arr
      * @return array
      */
     public static function castForDb(array $arr)
     {
         foreach ($arr as &$val) {
             if (is_bool($val)) {
-                $val = (int)$val;
+                $val = (int) $val;
             }
         }
+
         return $arr;
     }
 
     /**
      * 差分比較
      *
-     * @param array $pre
-     * @param array $post
      * @return array
      */
     public static function arrayDiff(array $pre, array $post)
@@ -81,7 +79,8 @@ class Util
         return $diff;
     }
 
-    private static function isJson($string) {
+    private static function isJson($string)
+    {
         return is_string($string) && is_array(json_decode($string, true)) && (json_last_error() == JSON_ERROR_NONE) ? true : false;
     }
 }

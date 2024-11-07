@@ -2,7 +2,6 @@
 
 /.git
 /.git*
-/.ac-php-conf.json
 
 # from .gitignore
 

@@ -3,12 +3,12 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * テーブルの作成、カラム追加&削除
  * カラムの更新時はdrop column & add columnで作り直す
  * Fieldsより
- *
  */
 class CreateAndUpdateAppTables extends Command
 {
@@ -34,6 +34,7 @@ class CreateAndUpdateAppTables extends Command
     /**
      * typeマッピング
      * NUMBERはじめ数値は小数点あったりなかったり空白だったりがあり得るのでint系は使用できない
+     *
      * @see https://developer.cybozu.io/hc/ja/articles/202166330
      */
     const TYPE_MAP = [
@@ -87,20 +88,20 @@ class CreateAndUpdateAppTables extends Command
      */
     public function handle()
     {
-        $this->question('start. ' . __CLASS__);
+        $this->question('start. '.__CLASS__);
 
         $this->updateTables();
 
         $updatedApps = array_unique($this->updatedApps);
         foreach ($this->updatedApps as $updatedAppId) {
-            $this->comment('...waiting 2 seconds... (app:' . $updatedAppId);
+            $this->comment('...waiting 2 seconds... (app:'.$updatedAppId);
             sleep(2);
             $this->call('kintone:get-apps-all-data', [
-                    'appId' => $updatedAppId,
-                ]);
+                'appId' => $updatedAppId,
+            ]);
         }
 
-        $this->question('end. ' . __CLASS__);
+        $this->question('end. '.__CLASS__);
     }
 
     /**
@@ -129,9 +130,9 @@ class CreateAndUpdateAppTables extends Command
 
             // 未実施のfields最新を検索
             $postFields = \App\Model\Fields::where([
-                    'appId' => $app['appId'],
-                    'batch' => false,
-                ])->orderByDesc('id')->first();
+                'appId' => $app['appId'],
+                'batch' => false,
+            ])->orderByDesc('id')->first();
 
             if (empty($postFields)) {
                 continue;
@@ -140,13 +141,13 @@ class CreateAndUpdateAppTables extends Command
             // create table テーブル名は'app_0000000000{appId}'
             $tableName = sprintf('app_%010d', $app['appId']);
 
-            $this->info('updated table: ' . $tableName);
+            $this->info('updated table: '.$tableName);
 
             // 以前のスキーマを取得
             $preFields = \App\Model\Fields::where([
-                    'appId' => $app['appId'],
-                    'batch' => true,
-                ])->orderByDesc('id')->first();
+                'appId' => $app['appId'],
+                'batch' => true,
+            ])->orderByDesc('id')->first();
 
             if ($preFields) {
                 // テーブルスキーマ確認
@@ -179,7 +180,7 @@ class CreateAndUpdateAppTables extends Command
                 // 作り直しがある場合のためにカラム削除とカラム追加は別々に行う
                 if (! empty($pre)) {
                     $this->updatedApps[] = $app['appId'];
-                    \Schema::table(
+                    Schema::table(
                         $tableName,
                         function (\Illuminate\Database\Schema\Blueprint $table) use ($pre) {
                             foreach (array_keys($pre) as $key) {
@@ -189,7 +190,7 @@ class CreateAndUpdateAppTables extends Command
                 }
                 if (! empty($post)) {
                     $this->updatedApps[] = $app['appId'];
-                    \Schema::table(
+                    Schema::table(
                         $tableName,
                         function (\Illuminate\Database\Schema\Blueprint $table) use ($post) {
                             foreach ($post as $key => $val) {
@@ -200,8 +201,8 @@ class CreateAndUpdateAppTables extends Command
 
             } else {
                 // テーブル新規作成
-                if (\Schema::hasTable($tableName)) {
-                    throw new \RuntimeException('テーブル ' . $tableName . ' が既にあります。テーブルを削除するかfieldsのbatchフラグを調整してください。');
+                if (Schema::hasTable($tableName)) {
+                    throw new \RuntimeException('テーブル '.$tableName.' が既にあります。テーブルを削除するかfieldsのbatchフラグを調整してください。');
                 }
 
                 $this->updatedApps[] = $app['appId'];
@@ -209,9 +210,9 @@ class CreateAndUpdateAppTables extends Command
                 $post = json_decode($postFields->properties, true);
 
                 \Log::info(['create table' => $post]);
-                $this->warn('create table: ' . $tableName);
+                $this->warn('create table: '.$tableName);
 
-                \Schema::create(
+                Schema::create(
                     $tableName,
                     function (\Illuminate\Database\Schema\Blueprint $table) use ($post) {
                         // id, revision
@@ -227,19 +228,16 @@ class CreateAndUpdateAppTables extends Command
 
             // batchをtrueに スキップしたものも含めてすべてマイグレート済フラグを立てる
             \App\Model\Fields::where([
-                    'appId' => $app['appId'],
-                    'batch' => false,
-                ])->update([
-                        'batch' => true,
-                    ]);
+                'appId' => $app['appId'],
+                'batch' => false,
+            ])->update([
+                'batch' => true,
+            ]);
         }
     }
 
     /**
      * add schema to table
-     * @param \Illuminate\Database\Schema\Blueprint $table
-     * @param string $key
-     * @param string $type
      */
     private static function addColumn(\Illuminate\Database\Schema\Blueprint &$table, string $key, string $type)
     {

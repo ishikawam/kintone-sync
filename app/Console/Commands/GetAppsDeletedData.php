@@ -2,8 +2,10 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Lib\KintoneApiWrapper;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 /**
  * アプリの削除されたレコードを取得し、DBにGET同期保存する
@@ -29,7 +31,6 @@ class GetAppsDeletedData extends Command
      */
     protected $description = 'アプリの削除されたのレコードを取得保存';
 
-
     // KintoneApi
     private $api;
 
@@ -39,24 +40,22 @@ class GetAppsDeletedData extends Command
      * @return mixed
      */
     public function handle()
-   {
-        $this->question('start. ' . __CLASS__);
+    {
+        $this->question('start. '.__CLASS__);
 
-        $this->api = new KintoneApiWrapper();
+        $this->api = new KintoneApiWrapper;
 
         $appId = $this->argument('appId');
 
         $this->getAppsData($appId);
 
-        $this->question('end. ' . __CLASS__);
+        $this->question('end. '.__CLASS__);
     }
 
     /**
      * 削除のあったアプリの更新のあったレコードを取得
-     *
-     * @param int|null $appId
      */
-    private function getAppsData(int $appId = null)
+    private function getAppsData(?int $appId = null)
     {
         if ($appId) {
             $apps = [\App\Model\Apps::find($appId)];
@@ -75,12 +74,12 @@ class GetAppsDeletedData extends Command
 
             // テーブル名はappId
             $tableName = sprintf('app_%010d', $app->appId);
-            if (! \Schema::hasTable($tableName)) {
-                throw new \RuntimeException('テーブル ' . $tableName . ' が存在しません。kintone:get-info, kintone:create-and-update-app-tablesを先に実行してください。それでもうまくいかない場合はfieldsテーブルを削除してから再度それぞれ実行してください。');
+            if (! Schema::hasTable($tableName)) {
+                throw new \RuntimeException('テーブル '.$tableName.' が存在しません。kintone:get-info, kintone:create-and-update-app-tablesを先に実行してください。それでもうまくいかない場合はfieldsテーブルを削除してから再度それぞれ実行してください。');
             }
 
             // DBから全件数を取得
-            $count = \DB::table($tableName)
+            $count = DB::table($tableName)
                 ->count();
 
             // 削除されてるか判定したいだけなので1件のみ取得
@@ -93,11 +92,11 @@ class GetAppsDeletedData extends Command
             // delete
             if ($totalCount < $count) {
                 // これは正確な判定はできない。deleteしてinsertした場合等。簡易チェックで正確なのはGetAppsAllDataに任せる。
-                $this->comment('...waiting 2 seconds... (app:' . $app->appId);
+                $this->comment('...waiting 2 seconds... (app:'.$app->appId);
                 sleep(2);
                 $this->call('kintone:get-apps-all-data', [
-                        'appId' => $app->appId,
-                    ]);
+                    'appId' => $app->appId,
+                ]);
             }
         }
     }
