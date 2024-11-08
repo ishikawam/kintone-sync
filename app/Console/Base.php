@@ -13,18 +13,15 @@ class Base extends Command
     /**
      * const
      */
-    const LIMIT_READ = 500;  // kintoneの取得レコード数上限
+    public const LIMIT_READ = 500;  // kintoneの取得レコード数上限
 
-    const LIMIT_WRITE = 100;  // kintoneの書き込みレコード数上限
+    public const LIMIT_WRITE = 100;  // kintoneの書き込みレコード数上限
 
     /**
      * kintone, DBの差分を比較して変更or新規追加があればDBを更新する
      *
-     * @param  string  $tableName
-     * @param  int  $appId
      * @param  array<mixed>  $preArray
      * @param  array<mixed>  $postArray
-     * @return bool
      */
     public function insertAndUpdate(string $tableName, int $appId, array $preArray, array $postArray): bool
     {
@@ -36,6 +33,7 @@ class Base extends Command
                     'update: '.$appId.':'.$postArray['$id'],
                     $diff,
                 );
+
                 try {
                     DB::table($tableName)
                         ->where('$id', $postArray['$id'])
@@ -51,13 +49,14 @@ class Base extends Command
                         $this->info('DONE.');
 
                         return true;
-                    } else {
-                        throw $e;
                     }
+
+                    throw $e;
                 }
             } else {
                 // insert
                 echo 'I';
+
                 /* insertのログはいらない
                    \Log::info(
                    'insert: ' . $appId . ':' . $postArray['$id'],
@@ -78,9 +77,9 @@ class Base extends Command
                         $this->info('DONE.');
 
                         return true;
-                    } else {
-                        throw $e;
                     }
+
+                    throw $e;
                 }
             }
 

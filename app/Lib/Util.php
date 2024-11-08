@@ -11,6 +11,7 @@ class Util
      * DBとAPIで取得した値との比較をするために、booleanを数値にキャスト変換
      *
      * @param  array<mixed>  $arr
+     *
      * @return array<mixed>
      */
     public static function castForDb(array $arr): array
@@ -29,6 +30,7 @@ class Util
      *
      * @param  array<mixed>  $pre
      * @param  array<mixed>  $post
+     *
      * @return array<mixed>
      */
     public static function arrayDiff(array $pre, array $post): array
@@ -50,6 +52,7 @@ class Util
      *
      * @param  array<mixed>  $pre
      * @param  array<mixed>  $post
+     *
      * @return array<mixed>
      */
     private static function arrayDiffAssocRecursive(array $pre, array $post): array
@@ -87,8 +90,7 @@ class Util
     }
 
     /**
-     * @param mixed $string
-     * @return bool
+     * @param  mixed  $string
      */
     private static function isJson($string): bool
     {

@@ -97,7 +97,8 @@ class GetInfo extends Command
                 unset($apps[$key]);
 
                 continue;
-            } elseif ($ignoreApps === ['*'] && ! in_array($app['appId'], $includeApps)) {
+            }
+            if ($ignoreApps === ['*'] && ! in_array($app['appId'], $includeApps)) {
                 unset($apps[$key]);
 
                 continue;

@@ -12,27 +12,6 @@ use Illuminate\Support\Facades\Schema;
  */
 class CreateAndUpdateAppTables extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'kintone:create-and-update-app-tables';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'テーブルの作成、カラム追加&削除';
-
-    /**
-     * GetAppsData強制実行フラグ
-     *
-     * @var array<int>
-     */
-    private array $updatedApps = [];
-
     // const
 
     /**
@@ -41,7 +20,7 @@ class CreateAndUpdateAppTables extends Command
      *
      * @see https://developer.cybozu.io/hc/ja/articles/202166330
      */
-    const TYPE_MAP = [
+    public const TYPE_MAP = [
         // bigint_required
         'RECORD_NUMBER' => 'bigint_required',  // レコード番号, Record_number = primary key
         '__ID__' => 'bigint_required',  // レコードID
@@ -84,6 +63,27 @@ class CreateAndUpdateAppTables extends Command
         'SPACER' => 'string',  // スペース
         'HR' => 'string',  // 罫線
     ];
+
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'kintone:create-and-update-app-tables';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'テーブルの作成、カラム追加&削除';
+
+    /**
+     * GetAppsData強制実行フラグ
+     *
+     * @var array<int>
+     */
+    private array $updatedApps = [];
 
     /**
      * Execute the console command.
@@ -172,9 +172,8 @@ class CreateAndUpdateAppTables extends Command
                             // typeの変更が不要であればスルー
                             unset($pre[$key]);
                             unset($post[$key]);
-                        } else {
-                            // typeの変更が必要であればカラム作り直し
                         }
+                        // typeの変更が必要であればカラム作り直し
                     }
                 }
 
@@ -202,7 +201,6 @@ class CreateAndUpdateAppTables extends Command
                             }
                         });
                 }
-
             } else {
                 // テーブル新規作成
                 if (Schema::hasTable($tableName)) {
@@ -227,7 +225,6 @@ class CreateAndUpdateAppTables extends Command
                             self::addColumn($table, $key, $val['type']);
                         }
                     });
-
             }
 
             // batchをtrueに スキップしたものも含めてすべてマイグレート済フラグを立てる
@@ -249,30 +246,37 @@ class CreateAndUpdateAppTables extends Command
             case 'bigint_required':
                 $table->unsignedBigInteger($key)
                     ->comment($type);
+
                 break;
             case 'bigint':
                 $table->bigInteger($key)->nullable()
                     ->comment($type);
+
                 break;
             case 'date':
                 $table->date($key)->nullable()
                     ->comment($type);
+
                 break;
             case 'text':
                 $table->text($key)->nullable()
                     ->comment($type);
+
                 break;
             case 'json':
                 $table->json($key)->nullable()
                     ->comment($type);
+
                 break;
             case 'string_short':
                 $table->string($key, 20)->nullable()
                     ->comment($type);
+
                 break;
             case 'string':
                 $table->string($key, 100)->nullable()
                     ->comment($type);
+
                 break;
             default:
                 throw new \RuntimeException('error. '.$type);
