@@ -49,8 +49,8 @@ return [
             'tokens' => json_decode(env('KINTONE_TOKENS', '{}'), true, 512, JSON_THROW_ON_ERROR),
         ],
 
-        'ignore_apps' => array_filter(explode(',', env('KINTONE_IGNORE_APPS'))),
-        'include_apps' => array_filter(explode(',', env('KINTONE_INCLUDE_APPS'))),
+        'ignore_apps' => array_filter(explode(',', env('KINTONE_IGNORE_APPS', ''))),
+        'include_apps' => array_filter(explode(',', env('KINTONE_INCLUDE_APPS', ''))),
 
         'custom' => config('kintone'),
     ],

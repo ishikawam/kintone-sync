@@ -75,14 +75,8 @@ get-apps-deleted-data:
 refresh-lookup:
 	docker compose exec php php artisan kintone:refresh-lookup
 
-run:
 # バックアップを実施
-	make up
-	make get-info
-	make create-and-update-app-tables
-	make get-apps-updated-data
-	make get-apps-deleted-data
-#	make down
+run: get-info create-and-update-app-tables get-apps-updated-data get-apps-deleted-data
 
 destroy:
 	@echo "remove mysql data. Are you sure? " && read ans && [ $$ans == yes ]
