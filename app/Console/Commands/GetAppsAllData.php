@@ -139,7 +139,7 @@ class GetAppsAllData extends \App\Console\Base
                 if (! isset($ids[$val->{'$id'}])) {
                     \Log::info(
                         'delete record. APP: '.$app->appId,
-                        $val
+                        (array) $val
                     );
                     echo 'D';
                     DB::table($tableName)
