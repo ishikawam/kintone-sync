@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Lib\KintoneApiWrapper;
+use GuzzleHttp\Exception\ClientException;
 use Illuminate\Console\Command;
 
 /**
@@ -81,7 +82,13 @@ class GetInfo extends Command
             // パスワード認証できない場合
             $apps = [];
             foreach (config('services.kintone.login.tokens') as $id => $val) {
-                $apps[] = $this->api->appById($id)->get($id);
+                try {
+                    $apps[] = $this->api->appById($id)->get($id);
+                } catch (ClientException $f) {
+                    $this->error('ERROR! app_id = '.$id);
+
+                    throw $f;
+                }
             }
         }
         // キーをappIdに

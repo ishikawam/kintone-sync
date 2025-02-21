@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Lib\KintoneApiWrapper;
+use GuzzleHttp\Exception\ClientException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -95,8 +96,14 @@ class GetAppsUpdatedData extends \App\Console\Base
             $offset = 0;
             $lf = false;
             while ($totalCount >= $offset) {
-                $records = $this->api->recordsByAppId($app->appId)
-                    ->get($app->appId, $whereLatest.'limit '.self::LIMIT_READ.' offset '.$offset);
+                try {
+                    $records = $this->api->recordsByAppId($app->appId)
+                        ->get($app->appId, $whereLatest.'limit '.self::LIMIT_READ.' offset '.$offset);
+                } catch (ClientException $e) {
+                    $this->error($e->getMessage().' app_id = '.$app->appId);
+
+                    throw $e;
+                }
 
                 if ($offset == 0) {
                     // 初回
