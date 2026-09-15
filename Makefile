@@ -1,8 +1,15 @@
 # kintone-sync
 
-all: setup
+.DEFAULT_GOAL := help
 
-setup:
+.PHONY: help setup install migrate migrate-rollback seed up down log start stop restart ssh clear fix analyse \
+	get-info create-and-update-app-tables get-apps-all-data get-apps-updated-data get-apps-deleted-data \
+	refresh-lookup run destroy
+
+help: ## このヘルプメッセージを表示
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+setup: ## 初期セットアップ
 	-cp -n .env.sample/.env_local .env
 	-cp -n config.sample/kintone.php config/kintone.php
 	docker compose pull
@@ -10,75 +17,75 @@ setup:
 	docker compose run --rm php composer install
 	docker compose run --rm php php artisan key:generate
 
-install:
+install: ## 依存関係のインストール
 	docker compose run --rm php composer install
 	docker compose run --rm php php artisan clear-compiled
 
-migrate:
+migrate: ## マイグレーション実行
 	docker compose exec php bash -c "php artisan migrate"
 
-migrate-rollback:
+migrate-rollback: ## マイグレーションのロールバック
 	docker compose exec php bash -c "php artisan migrate:rollback"
 
-seed:
+seed: ## DBを再構築しシードを投入
 	docker compose exec php bash -c "php artisan migrate:refresh --seed"
 
-up:
+up: ## Dockerコンテナ起動
 	docker compose up
 
-down:
+down: ## Dockerコンテナ停止
 	docker compose down --remove-orphans
 
-log:
+log: ## ログをtail表示
 	tail -f ./storage/logs/*
 
-start:
+start: ## Dockerコンテナをstart
 	docker compose start
 
-stop:
+stop: ## Dockerコンテナをstop
 	docker compose stop
 
-restart:
+restart: ## Dockerコンテナを再起動
 	docker compose restart
 
-ssh:
+ssh: ## phpコンテナのシェルに接続
 	docker compose exec php bash
 
-clear:
+clear: ## キャッシュクリア
 	docker compose run --rm php bash -c "composer dump-autoload --optimize"
 	docker compose run --rm php bash -c "php artisan clear-compiled ; php artisan config:clear"
 
-fix:
+fix: ## コードフォーマット
 	docker compose run --rm php ./vendor/bin/pint
 
-analyse:
+analyse: ## PHPStan静的解析
 	docker compose run --rm php ./vendor/bin/phpstan analyse
 
 #######################################
 # kintone-sync commands
 
-get-info:
+get-info: ## アプリ一覧、スペースの情報を取得保存
 	docker compose exec php php artisan kintone:get-info
 
-create-and-update-app-tables:
+create-and-update-app-tables: ## テーブルの作成、カラム追加と削除
 	docker compose exec php php artisan kintone:create-and-update-app-tables
 
-get-apps-all-data:
+get-apps-all-data: ## アプリのすべてのレコードを取得、同期
 	docker compose exec php php artisan kintone:get-apps-all-data
 
-get-apps-updated-data:
+get-apps-updated-data: ## 追加、更新されたレコードを差分同期
 	docker compose exec php php artisan kintone:get-apps-updated-data
 
-get-apps-deleted-data:
+get-apps-deleted-data: ## 削除されたレコードを差分同期
 	docker compose exec php php artisan kintone:get-apps-deleted-data
 
-refresh-lookup:
+refresh-lookup: ## ルックアップの再取得を一括実施
 	docker compose exec php php artisan kintone:refresh-lookup
 
 # バックアップを実施
-run: get-info create-and-update-app-tables get-apps-updated-data get-apps-deleted-data
+run: get-info create-and-update-app-tables get-apps-updated-data get-apps-deleted-data ## バックアップを実施
 
-destroy:
+destroy: ## mysqlデータを削除しコンテナを破棄
 	@echo "remove mysql data. Are you sure? " && read ans && [ $$ans == yes ]
 	docker compose down --remove-orphans
 	rm -r storage/mysql/data
