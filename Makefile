@@ -2,7 +2,7 @@
 
 .DEFAULT_GOAL := help
 
-.PHONY: help setup install migrate migrate-rollback seed up down log start stop restart ssh clear fix analyse \
+.PHONY: help setup install migrate migrate-rollback up down log start stop restart ssh clear fix analyse \
 	get-info create-and-update-app-tables get-apps-all-data get-apps-updated-data get-apps-deleted-data \
 	refresh-lookup run destroy
 
@@ -26,9 +26,6 @@ migrate: ## マイグレーション実行
 
 migrate-rollback: ## マイグレーションのロールバック
 	docker compose exec php bash -c "php artisan migrate:rollback"
-
-seed: ## DBを再構築しシードを投入
-	docker compose exec php bash -c "php artisan migrate:refresh --seed"
 
 up: ## Dockerコンテナ起動
 	docker compose up
