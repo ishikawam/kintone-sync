@@ -253,7 +253,7 @@ class GetInfo extends Command
                 'properties' => json_encode($data['properties'], JSON_UNESCAPED_UNICODE),
             ]);
 
-            if ($row->batch === null) {
+            if ($row->wasRecentlyCreated) {
                 $this->comment('new fields: '.$appId.', '.$data['revision']);
             }
         }
