@@ -2,7 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Model\Apps;
+use App\Model\Fields;
 use Illuminate\Console\Command;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -126,14 +129,14 @@ class CreateAndUpdateAppTables extends Command
         // ignore apps
         $ignoreApps = config('services.kintone.ignore_apps');
 
-        foreach (\App\Model\Apps::all() as $app) {
+        foreach (Apps::all() as $app) {
             // ignore apps
             if (in_array($app['appId'], $ignoreApps)) {
                 continue;
             }
 
             // 未実施のfields最新を検索
-            $postFields = \App\Model\Fields::where([
+            $postFields = Fields::where([
                 'appId' => $app['appId'],
                 'batch' => false,
             ])->orderByDesc('id')->first();
@@ -148,7 +151,7 @@ class CreateAndUpdateAppTables extends Command
             $this->info('updated table: '.$tableName);
 
             // 以前のスキーマを取得
-            $preFields = \App\Model\Fields::where([
+            $preFields = Fields::where([
                 'appId' => $app['appId'],
                 'batch' => true,
             ])->orderByDesc('id')->first();
@@ -185,7 +188,7 @@ class CreateAndUpdateAppTables extends Command
                     $this->updatedApps[] = $app['appId'];
                     Schema::table(
                         $tableName,
-                        function (\Illuminate\Database\Schema\Blueprint $table) use ($pre) {
+                        function (Blueprint $table) use ($pre) {
                             foreach (array_keys($pre) as $key) {
                                 $table->dropColumn($key);
                             }
@@ -195,7 +198,7 @@ class CreateAndUpdateAppTables extends Command
                     $this->updatedApps[] = $app['appId'];
                     Schema::table(
                         $tableName,
-                        function (\Illuminate\Database\Schema\Blueprint $table) use ($post) {
+                        function (Blueprint $table) use ($post) {
                             foreach ($post as $key => $val) {
                                 self::addColumn($table, $key, $val['type']);
                             }
@@ -216,7 +219,7 @@ class CreateAndUpdateAppTables extends Command
 
                 Schema::create(
                     $tableName,
-                    function (\Illuminate\Database\Schema\Blueprint $table) use ($post) {
+                    function (Blueprint $table) use ($post) {
                         // id, revision
                         $table->unsignedBigInteger('$id')->primary();
                         $table->unsignedBigInteger('$revision')->index();
@@ -228,7 +231,7 @@ class CreateAndUpdateAppTables extends Command
             }
 
             // batchをtrueに スキップしたものも含めてすべてマイグレート済フラグを立てる
-            \App\Model\Fields::where([
+            Fields::where([
                 'appId' => $app['appId'],
                 'batch' => false,
             ])->update([
@@ -240,7 +243,7 @@ class CreateAndUpdateAppTables extends Command
     /**
      * add schema to table
      */
-    private static function addColumn(\Illuminate\Database\Schema\Blueprint &$table, string $key, string $type): void
+    private static function addColumn(Blueprint &$table, string $key, string $type): void
     {
         switch (self::TYPE_MAP[$type]) {
             case 'bigint_required':

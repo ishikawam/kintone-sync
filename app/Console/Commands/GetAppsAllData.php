@@ -2,7 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Base;
 use App\Lib\KintoneApiWrapper;
+use App\Lib\Util;
+use App\Model\Apps;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -16,7 +19,7 @@ use Illuminate\Support\Facades\Schema;
  * APIは、例えば20,000レコードある場合APIは40アクセス消費する。
  * 直接DBをいじった場合に強制同期したいときはfieldsのレコードを削除する等して対応する。
  */
-class GetAppsAllData extends \App\Console\Base
+class GetAppsAllData extends Base
 {
     /**
      * The name and signature of the console command.
@@ -59,9 +62,9 @@ class GetAppsAllData extends \App\Console\Base
     private function getAppsData(?int $appId = null): void
     {
         if ($appId) {
-            $apps = [\App\Model\Apps::find($appId)];
+            $apps = [Apps::find($appId)];
         } else {
-            $apps = \App\Model\Apps::all();
+            $apps = Apps::all();
         }
 
         // ignore apps
@@ -122,7 +125,7 @@ class GetAppsAllData extends \App\Console\Base
                         return ! is_null($c);
                     });
                     // 逆もしかり…
-                    $postArray = array_filter(\App\Lib\Util::castForDb($postArray), function ($c) {
+                    $postArray = array_filter(Util::castForDb($postArray), function ($c) {
                         return ! is_null($c);
                     });
 

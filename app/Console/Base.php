@@ -2,7 +2,9 @@
 
 namespace App\Console;
 
+use App\Lib\Util;
 use Illuminate\Console\Command;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -25,7 +27,7 @@ class Base extends Command
      */
     public function insertAndUpdate(string $tableName, int $appId, array $preArray, array $postArray): bool
     {
-        if ($diff = \App\Lib\Util::arrayDiff($preArray, $postArray)) {
+        if ($diff = Util::arrayDiff($preArray, $postArray)) {
             if ($preArray) {
                 // update
                 echo 'U';
@@ -38,7 +40,7 @@ class Base extends Command
                     DB::table($tableName)
                         ->where('$id', $postArray['$id'])
                         ->update($postArray);
-                } catch (\Illuminate\Database\QueryException $e) {
+                } catch (QueryException $e) {
                     if ($e->getCode() == '42S22' && ($e->errorInfo[1] ?? null) == 1054) {
                         // Column not found で再生成
                         $this->info('update: error.');
@@ -66,7 +68,7 @@ class Base extends Command
                 try {
                     DB::table($tableName)
                         ->insert($postArray);
-                } catch (\Illuminate\Database\QueryException $e) {
+                } catch (QueryException $e) {
                     if ($e->getCode() == '42S22' && ($e->errorInfo[1] ?? null) == 1054) {
                         // Column not found で再生成
                         $this->info('insert: error');

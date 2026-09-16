@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Lib\KintoneApiWrapper;
+use App\Model\Apps;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -56,9 +57,9 @@ class GetAppsDeletedData extends Command
     private function getAppsData(?int $appId = null): void
     {
         if ($appId) {
-            $apps = [\App\Model\Apps::find($appId)];
+            $apps = [Apps::find($appId)];
         } else {
-            $apps = \App\Model\Apps::all();
+            $apps = Apps::all();
         }
 
         // ignore apps

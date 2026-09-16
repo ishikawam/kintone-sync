@@ -2,12 +2,15 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Base;
 use App\Lib\KintoneApiWrapper;
+use App\Model\Apps;
+use App\Model\Fields;
 
 /**
  * ルックアップの再取得を一括実施
  */
-class RefreshLookup extends \App\Console\Base
+class RefreshLookup extends Base
 {
     /**
      * The name and signature of the console command.
@@ -48,13 +51,13 @@ class RefreshLookup extends \App\Console\Base
         $refreshLookups = config('services.kintone.custom.refresh_lookup');
 
         foreach ($refreshLookups as $refreshLookup) {
-            $app = \App\Model\Apps::find($refreshLookup['app']);
+            $app = Apps::find($refreshLookup['app']);
             $query = $refreshLookup['query'];
 
             $this->info(sprintf('%s: %s	\'%s\'', $app->appId, $app->name, $query));
 
             // fields
-            $fields = \App\Model\Fields::where('appId', $app->appId)
+            $fields = Fields::where('appId', $app->appId)
                 ->orderByDesc('id')
                 ->first();
             $field = json_decode($fields->properties);

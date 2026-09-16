@@ -3,6 +3,12 @@
 namespace App\Console\Commands;
 
 use App\Lib\KintoneApiWrapper;
+use App\Lib\Util;
+use App\Model\Apps;
+use App\Model\Fields;
+use App\Model\Form;
+use App\Model\Layout;
+use App\Model\Spaces;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Console\Command;
 
@@ -111,7 +117,7 @@ class GetInfo extends Command
                 continue;
             }
 
-            $row = \App\Model\Apps::firstOrNew(['appId' => $app['appId']]);
+            $row = Apps::firstOrNew(['appId' => $app['appId']]);
             $preArray = $row->toArray();
             $row->appId = $app['appId'];
             $row->code = $app['code'];
@@ -125,18 +131,18 @@ class GetInfo extends Command
             $row->{'modifier/name'} = $app['modifier']['name'];
             $row->spaceId = $app['spaceId'];
             $row->threadId = $app['threadId'];
-            $postArray = \App\Lib\Util::castForDb($row->toArray());
+            $postArray = Util::castForDb($row->toArray());
             $row->save();
 
             // 差分比較
-            if ($diff = \App\Lib\Util::arrayDiff($preArray, $postArray)) {
+            if ($diff = Util::arrayDiff($preArray, $postArray)) {
                 \Log::info('diff app: '.$row->appId, $diff);
                 $this->comment('diff app: '.$row->appId);
             }
         }
 
         // 次にkintoneで削除されたレコードを検索してDBのレコードを削除
-        foreach (\App\Model\Apps::all() as $row) {
+        foreach (Apps::all() as $row) {
             if (! isset($apps[$row->appId])) {
                 \Log::info('delete app', $row->toArray());
                 $this->comment('delete app: '.$row->appId);
@@ -157,7 +163,7 @@ class GetInfo extends Command
         foreach ($spaceIds as $spaceId) {
             $space = $this->api->space()->get($spaceId);
 
-            $row = \App\Model\Spaces::firstOrNew(['id' => $space['id']]);
+            $row = Spaces::firstOrNew(['id' => $space['id']]);
             $preArray = $row->toArray();
             $row->id = $space['id'];
             $row->defaultThread = $space['defaultThread'];
@@ -176,18 +182,18 @@ class GetInfo extends Command
             $row->isGuest = $space['isGuest'];
             $row->fixedMember = $space['fixedMember'];
             // $space['attachedApps'] は使用しない
-            $postArray = \App\Lib\Util::castForDb($row->toArray());
+            $postArray = Util::castForDb($row->toArray());
             $row->save();
 
             // 差分比較
-            if ($diff = \App\Lib\Util::arrayDiff($preArray, $postArray)) {
+            if ($diff = Util::arrayDiff($preArray, $postArray)) {
                 \Log::info('diff spaces: '.$row->id, $diff);
                 $this->comment('diff spaces: '.$row->id);
             }
         }
 
         // 次にkintoneで削除されたレコードを検索してDBのレコードを削除
-        foreach (\App\Model\Spaces::all() as $row) {
+        foreach (Spaces::all() as $row) {
             if (! in_array($row->id, $spaceIds)) {
                 \Log::info('delete spaces', $row->toArray());
                 $this->comment('delete spaces: '.$row->id);
@@ -205,22 +211,22 @@ class GetInfo extends Command
     {
         foreach ($appIds as $appId) {
             $data = $this->api->appById($appId)->getForm($appId);
-            $row = \App\Model\Form::firstOrNew(['appId' => $appId]);
+            $row = Form::firstOrNew(['appId' => $appId]);
             $preArray = $row->toArray();
             $row->appId = $appId;
             $row->properties = json_encode($data, JSON_UNESCAPED_UNICODE);
-            $postArray = \App\Lib\Util::castForDb($row->toArray());
+            $postArray = Util::castForDb($row->toArray());
             $row->save();
 
             // 差分比較
-            if ($diff = \App\Lib\Util::arrayDiff($preArray, $postArray)) {
+            if ($diff = Util::arrayDiff($preArray, $postArray)) {
                 \Log::info('diff form: '.$row->appId, $diff);
                 $this->comment('diff form: '.$row->appId);
             }
         }
 
         // 次にkintoneで削除されたレコードを検索してDBのレコードを削除
-        foreach (\App\Model\Form::all() as $row) {
+        foreach (Form::all() as $row) {
             if (! in_array($row->appId, $appIds)) {
                 \Log::info('delete form', $row->toArray());
                 $this->comment('delete form: '.$row->appId);
@@ -240,7 +246,7 @@ class GetInfo extends Command
         foreach ($appIds as $appId) {
             $data = $this->api->appById($appId)->getFields($appId);
 
-            $row = \App\Model\Fields::firstOrCreate([
+            $row = Fields::firstOrCreate([
                 'appId' => $appId,
                 'revision' => $data['revision'],
             ], [
@@ -263,7 +269,7 @@ class GetInfo extends Command
     {
         foreach ($appIds as $appId) {
             $data = $this->api->appById($appId)->getLayout($appId);
-            $row = \App\Model\Layout::firstOrCreate([
+            $row = Layout::firstOrCreate([
                 'appId' => $appId,
                 'revision' => $data['revision'],
             ], [

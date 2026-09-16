@@ -2,7 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Base;
 use App\Lib\KintoneApiWrapper;
+use App\Lib\Util;
+use App\Model\Apps;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -15,7 +18,7 @@ use Illuminate\Support\Facades\Schema;
  * これは5分に1回程度。(1アプリにつき1日最低288アクセス消費)
  * 直接DBをいじった場合に強制同期したいときは、比較用キャッシュを削除する
  */
-class GetAppsUpdatedData extends \App\Console\Base
+class GetAppsUpdatedData extends Base
 {
     /**
      * The name and signature of the console command.
@@ -56,9 +59,9 @@ class GetAppsUpdatedData extends \App\Console\Base
     private function getAppsData(?int $appId = null): void
     {
         if ($appId) {
-            $apps = [\App\Model\Apps::find($appId)];
+            $apps = [Apps::find($appId)];
         } else {
-            $apps = \App\Model\Apps::all();
+            $apps = Apps::all();
         }
 
         // ignore apps
@@ -135,7 +138,7 @@ class GetAppsUpdatedData extends \App\Console\Base
                         return ! is_null($c);
                     });
                     // 逆もしかり…
-                    $postArray = array_filter(\App\Lib\Util::castForDb($postArray), function ($c) {
+                    $postArray = array_filter(Util::castForDb($postArray), function ($c) {
                         return ! is_null($c);
                     });
 
